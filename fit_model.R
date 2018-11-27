@@ -1,25 +1,15 @@
-package_load<-function(packages = NULL, quiet=TRUE, verbose=FALSE, warn.conflicts=FALSE){
-  
-  # download required packages if they're not already
-  
-  pkgsToDownload<- packages[!(packages  %in% installed.packages()[,"Package"])]
-  if(length(pkgsToDownload)>0)
-    install.packages(pkgsToDownload, repos="http://cran.us.r-project.org", quiet=quiet, verbose=verbose)
-  
-  # then load them
-  for(i in 1:length(packages))
-    require(packages[i], character.only=T, quietly=quiet, warn.conflicts=warn.conflicts)
-}
+
+source("sourcer.R")
 
 # required packages
 packs <- c("dplyr", "reshape2", "runjags", "MCMCpack", "mcmcplots",
-  'parallel')
-
+  'parallel', "coda")
 
 # load the packages
 package_load(packs)
 
 
+# read in the data
 dat <- read.csv("./data/detection_data.csv")
 
 
@@ -33,10 +23,10 @@ ncity <- length(unique(dat$city))
 npatch_covs <- 2
 
 # number of city level parameters (including intercept)
-ncity_covs <- 3
+ncity_covs <- 4
 
 # number of detection parameters (including intercept)
-ndet_covs <- 3
+ndet_covs <- 1
 
 # number of species
 nspecies <- 8
