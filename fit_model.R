@@ -83,8 +83,6 @@ boxplot(urb ~ city, data = to_plot)
 bx[,2] <- urb$urb1
 # make the patch level detection covariates
 dx <- matrix(1, ncol = ndet_covs, nsite)
-dx[,2] <- as.numeric(scale(log(det_data$photos)))
-dx[,3] <- dx[,2] ^ 2
 
 # bring in the city covs
 cdat <- read.csv("data/city_level_data.csv")
@@ -97,7 +95,7 @@ U <- matrix(1, ncol = ncity_covs, nrow = ncity)
 scale_cdat <- cdat %>% mutate_if(is.numeric, scale)
 
 # get only the covars we want
-to_keep_city <- c("habitat", "pop10_dens")
+to_keep_city <- c("habitat", "pop10_dens", "latitude")
 U[,-1] <- scale_cdat[,to_keep_city] %>% as.matrix
 
 # do raccoon analysis
@@ -129,7 +127,10 @@ inits <- function(chain){
                 dim = c(npatch_covs, ncity_covs)),
       sigma.int = rgamma(1, 1, 1),
       sigma.urb = rgamma(1, 1, 1),
-      rho_mat = runif(1, -1, 1),
+      sigma.lat = rgamma(1, 1, 1),
+      rho12 = runif(1, -1, 1),
+      rho13 = runif(1, -1, 1),
+      rho23 = runif(1, -1, 1),
       .RNG.name = switch(chain,
                          "1" = "base::Wichmann-Hill",
                          "2" = "base::Marsaglia-Multicarry",
@@ -154,23 +155,30 @@ inits <- function(chain){
   )
   )
 }
-hm <-table(z, det_data$city)
+# Settings for the jags models
+to_monitor <- c("B", "G", "D",
+              "rho_mu", "rho_sigma", "rho12","rho13","rho23",
+              "sigma.int", "sigma.urb", "sigma.lat", "z")
+my_model <- "./jags_scripts/mvn_occupancy_3preds.R"
+nchain <- 6
+nadapt <- 2e6
+nburnin <- 2e6
+nsample <- 83333
+nthin <- 2
+my_method <- "parallel"
 
-hm <- hm[2,] / colSums(hm)
 
 raccoon <- run.jags(
-  model = "./jags_scripts/mvn_int_slope2.R",
+  model = my_model,
   data = data_list,
-  n.chains = 6,
-  monitor = c("B", "G", "D",
-              "rho_mu", "rho_sigma", "rho_mat","sigma.int", "sigma.urb","z"),
-  adapt = 2e6,
-  burnin = 2e6,  sample = 166667, method = 'parallel',
+  n.chains = nchain,
+  monitor = to_monitor,
+  adapt = nadapt,
+  burnin = nburnin,  sample = nsample, thin = nthin, method = my_method,
   inits = inits, summarise = FALSE, modules = "glm")
 
-saveRDS(raccoon, "./results/raccoon8.RDS")
+saveRDS(raccoon, "./results/raccoon.RDS")
 rm(raccoon)
-
 
 # do rabbit
 data_list <- list(
@@ -186,7 +194,6 @@ data_list <- list(
   U = U,
   city_vec = city_vec
 )
-
 
 z <- data_list$y
 z[z>1] <- 1
@@ -225,160 +232,156 @@ inits <- function(chain){
   )
   )
 }
-hm <-table(z, det_data$city)
 
-hm <- hm[2,] / colSums(hm)
 
 rabbit <- run.jags(
-  model = "./jags_scripts/mvn_int_slope2.R",
+  model = my_model,
   data = data_list,
-  n.chains = 6,
-  monitor = c("B", "G", "D",
-              "rho_mu", "rho_sigma", "rho_mat","sigma.int", "sigma.urb","z"),
-  adapt = 2e6,
-  burnin = 2e6,  sample = 166667, method = 'parallel',
+  n.chains = nchain,
+  monitor = to_monitor,
+  adapt = nadapt,
+  burnin = nburnin,  sample = nsample, thin = nthin, method = my_method,
   inits = inits, summarise = FALSE, modules = "glm")
 
 saveRDS(rabbit, "./results/rabbit.RDS")
 rm(rabbit)
 
 # do coyote
-#data_list <- list(
-#  y = det_data$coyote,
-#  J = det_data$J,
-#  ncity = ncity,
-#  nsite = nsite,
-#  npatch_covs = npatch_covs,
-#  ncity_covs = ncity_covs,
-#  ndet_covs = ndet_covs,
-#  bx = bx,
-#  dx = dx,
-#  U = U,
-#  city_vec = city_vec
-#)
-#
-#
-#z <- data_list$y
-#z[z>1] <- 1
-#inits <- function(chain){
-#  gen_list <- function(chain = chain){
-#    list( 
-#      z = z,
-#      B = array(rnorm(ncity * npatch_covs), 
-#                dim = c(ncity, npatch_covs)),
-#      G = array(rnorm(ncity_covs * npatch_covs), 
-#                dim = c(npatch_covs, ncity_covs)),
-#      sigma.int = rgamma(1, 1, 1),
-#      sigma.urb = rgamma(1, 1, 1),
-#      rho_mat = runif(1, -1, 1),
-#      .RNG.name = switch(chain,
-#                         "1" = "base::Wichmann-Hill",
-#                         "2" = "base::Marsaglia-Multicarry",
-#                         "3" = "base::Super-Duper",
-#                         "4" = "base::Mersenne-Twister",
-#                         "5" = "base::Wichmann-Hill",
-#                         "6" = "base::Marsaglia-Multicarry",
-#                         "7" = "base::Super-Duper",
-#                         "8" = "base::Mersenne-Twister"),
-#      .RNG.seed = sample(1:1e+06, 1)
-#    )
-#  }
-#  return(switch(chain,           
-#                "1" = gen_list(chain),
-#                "2" = gen_list(chain),
-#                "3" = gen_list(chain),
-#                "4" = gen_list(chain),
-#                "5" = gen_list(chain),
-#                "6" = gen_list(chain),
-#                "7" = gen_list(chain),
-#                "8" = gen_list(chain)
-#  )
-#  )
-#}
-#
-#
-#coyote <- run.jags(
-#  model = "./jags_scripts/mvn_int_slope2.R",
-#  data = data_list,
-#  n.chains = 6,
-#  monitor = c("B", "G", "D",
-#              "rho_mu", "rho_sigma", "rho_mat","sigma.int", "sigma.urb","z"),
-#  adapt = 2e6,
-#  burnin = 2e6,  sample = 166667, method = 'parallel',
-#  inits = inits, summarise = FALSE, modules = "glm")
-#
-#saveRDS(coyote, "./results/coyote.RDS")
-#rm(coyote)
-
-# do opossum
-oy <- det_data[-grep("deco|foco", as.character(det_data$city)),]
 data_list <- list(
-  y = oy$opossum,
-  J = oy$J,
-  ncity = ncity-2,
-  nsite = nrow(oy),
-  npatch_covs = npatch_covs,
-  ncity_covs = ncity_covs,
-  ndet_covs = ndet_covs,
-  bx = bx[-grep("deco|foco", as.character(det_data$city)),],
-  dx = dx[-grep("deco|foco", as.character(det_data$city)),],
-  U = U[-c(3,4),],
-  city_vec = as.numeric(factor(as.character(oy$city)))
+ y = det_data$coyote,
+ J = det_data$J,
+ ncity = ncity,
+ nsite = nsite,
+ npatch_covs = npatch_covs,
+ ncity_covs = ncity_covs,
+ ndet_covs = ndet_covs,
+ bx = bx,
+ dx = dx,
+ U = U,
+ city_vec = city_vec
 )
 
 
 z <- data_list$y
 z[z>1] <- 1
 inits <- function(chain){
-  gen_list <- function(chain = chain){
-    list( 
-      z = z,
-      B = array(rnorm(ncity-2 * npatch_covs), 
-                dim = c(ncity-2, npatch_covs)),
-      G = array(rnorm(ncity_covs * npatch_covs), 
-                dim = c(npatch_covs, ncity_covs)),
-      sigma.int = rgamma(1, 1, 1),
-      sigma.urb = rgamma(1, 1, 1),
-      rho_mat = runif(1, -1, 1),
-      .RNG.name = switch(chain,
-                         "1" = "base::Wichmann-Hill",
-                         "2" = "base::Marsaglia-Multicarry",
-                         "3" = "base::Super-Duper",
-                         "4" = "base::Mersenne-Twister",
-                         "5" = "base::Wichmann-Hill",
-                         "6" = "base::Marsaglia-Multicarry",
-                         "7" = "base::Super-Duper",
-                         "8" = "base::Mersenne-Twister"),
-      .RNG.seed = sample(1:1e+06, 1)
-    )
-  }
-  return(switch(chain,           
-                "1" = gen_list(chain),
-                "2" = gen_list(chain),
-                "3" = gen_list(chain),
-                "4" = gen_list(chain),
-                "5" = gen_list(chain),
-                "6" = gen_list(chain),
-                "7" = gen_list(chain),
-                "8" = gen_list(chain)
-  )
-  )
+ gen_list <- function(chain = chain){
+   list(
+     z = z,
+     B = array(rnorm(ncity * npatch_covs),
+               dim = c(ncity, npatch_covs)),
+     G = array(rnorm(ncity_covs * npatch_covs),
+               dim = c(npatch_covs, ncity_covs)),
+     sigma.int = rgamma(1, 1, 1),
+     sigma.urb = rgamma(1, 1, 1),
+     rho_mat = runif(1, -1, 1),
+     .RNG.name = switch(chain,
+                        "1" = "base::Wichmann-Hill",
+                        "2" = "base::Marsaglia-Multicarry",
+                        "3" = "base::Super-Duper",
+                        "4" = "base::Mersenne-Twister",
+                        "5" = "base::Wichmann-Hill",
+                        "6" = "base::Marsaglia-Multicarry",
+                        "7" = "base::Super-Duper",
+                        "8" = "base::Mersenne-Twister"),
+     .RNG.seed = sample(1:1e+06, 1)
+   )
+ }
+ return(switch(chain,
+               "1" = gen_list(chain),
+               "2" = gen_list(chain),
+               "3" = gen_list(chain),
+               "4" = gen_list(chain),
+               "5" = gen_list(chain),
+               "6" = gen_list(chain),
+               "7" = gen_list(chain),
+               "8" = gen_list(chain)
+ )
+ )
 }
-hm <-table(z, det_data$city)
 
-hm <- hm[2,] / colSums(hm)
 
-opossum <- run.jags(
-  model = "./jags_scripts/mvn_int_slope2.R",
+coyote <- run.jags(
+  model = my_model,
   data = data_list,
-  n.chains = 6,
-  monitor = c("B", "G", "D",
-              "rho_mu", "rho_sigma", "rho_mat","sigma.int", "sigma.urb"),
-  adapt = 2e6,
-  burnin = 2e6,  sample = 166667, method = 'parallel',
+  n.chains = nchain,
+  monitor = to_monitor,
+  adapt = nadapt,
+  burnin = nburnin,  sample = nsample, thin = nthin, method = my_method,
   inits = inits, summarise = FALSE, modules = "glm")
-saveRDS(opossum, "./results/opossum_5city.RDS")
-rm(opossum)
+
+saveRDS(coyote, "./results/coyote.RDS")
+rm(coyote)
+
+# do opossum
+# oy <- det_data[-grep("deco|foco", as.character(det_data$city)),]
+# data_list <- list(
+#   y = oy$opossum,
+#   J = oy$J,
+#   ncity = ncity-2,
+#   nsite = nrow(oy),
+#   npatch_covs = npatch_covs,
+#   ncity_covs = ncity_covs,
+#   ndet_covs = ndet_covs,
+#   bx = bx[-grep("deco|foco", as.character(det_data$city)),],
+#   dx = dx[-grep("deco|foco", as.character(det_data$city)),],
+#   U = U[-c(3,4),],
+#   city_vec = as.numeric(factor(as.character(oy$city)))
+# )
+# 
+# 
+# z <- data_list$y
+# z[z>1] <- 1
+# inits <- function(chain){
+#   gen_list <- function(chain = chain){
+#     list( 
+#       z = z,
+#       B = array(rnorm(ncity-2 * npatch_covs), 
+#                 dim = c(ncity-2, npatch_covs)),
+#       G = array(rnorm(ncity_covs * npatch_covs), 
+#                 dim = c(npatch_covs, ncity_covs)),
+#       sigma.int = rgamma(1, 1, 1),
+#       sigma.urb = rgamma(1, 1, 1),
+#       rho_mat = runif(1, -1, 1),
+#       .RNG.name = switch(chain,
+#                          "1" = "base::Wichmann-Hill",
+#                          "2" = "base::Marsaglia-Multicarry",
+#                          "3" = "base::Super-Duper",
+#                          "4" = "base::Mersenne-Twister",
+#                          "5" = "base::Wichmann-Hill",
+#                          "6" = "base::Marsaglia-Multicarry",
+#                          "7" = "base::Super-Duper",
+#                          "8" = "base::Mersenne-Twister"),
+#       .RNG.seed = sample(1:1e+06, 1)
+#     )
+#   }
+#   return(switch(chain,           
+#                 "1" = gen_list(chain),
+#                 "2" = gen_list(chain),
+#                 "3" = gen_list(chain),
+#                 "4" = gen_list(chain),
+#                 "5" = gen_list(chain),
+#                 "6" = gen_list(chain),
+#                 "7" = gen_list(chain),
+#                 "8" = gen_list(chain)
+#   )
+#   )
+# }
+# hm <-table(z, det_data$city)
+# 
+# hm <- hm[2,] / colSums(hm)
+# 
+# opossum <- run.jags(
+#   model = "./jags_scripts/mvn_int_slope2.R",
+#   data = data_list,
+#   n.chains = 6,
+#   monitor = c("B", "G", "D",
+#               "rho_mu", "rho_sigma", "rho_mat","sigma.int", "sigma.urb"),
+#   adapt = 2e6,
+#   burnin = 2e6,  sample = 166667, method = 'parallel',
+#   inits = inits, summarise = FALSE, modules = "glm")
+# saveRDS(opossum, "./results/opossum_5city.RDS")
+# rm(opossum)
 
 # do skunk
 data_list <- list(
@@ -433,18 +436,14 @@ inits <- function(chain){
   )
   )
 }
-hm <-table(z, det_data$city)
-
-hm <- hm[2,] / colSums(hm)
 
 skunk <- run.jags(
-  model = "./jags_scripts/mvn_int_slope2.R",
+  model = my_model,
   data = data_list,
-  n.chains = 6,
-  monitor = c("B", "G", "D",
-              "rho_mu", "rho_sigma", "rho_mat","sigma.int", "sigma.urb","z"),
-  adapt = 2e6,
-  burnin = 2e6,  sample = 166667, method = 'parallel',
+  n.chains = nchain,
+  monitor = to_monitor,
+  adapt = nadapt,
+  burnin = nburnin,  sample = nsample, thin = nthin, method = my_method,
   inits = inits, summarise = FALSE, modules = "glm")
 
 saveRDS(skunk, "./results/skunk.RDS")

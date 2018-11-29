@@ -4,6 +4,6 @@ source("plotting_utility.R")
 
 # required packages
 packs <- c("dplyr", "reshape2", "runjags", "MCMCpack", "mcmcplots",
-           'parallel', "coda")
+           'parallel', "coda", "stringr", "data.table")
 
 package_load(packs)
