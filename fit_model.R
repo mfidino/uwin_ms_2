@@ -1,33 +1,18 @@
-package_load<-function(packages = NULL, quiet=TRUE, verbose=FALSE, warn.conflicts=FALSE){
-  
-  # download required packages if they're not already
-  
-  pkgsToDownload<- packages[!(packages  %in% installed.packages()[,"Package"])]
-  if(length(pkgsToDownload)>0)
-    install.packages(pkgsToDownload, repos="http://cran.us.r-project.org", quiet=quiet, verbose=verbose)
-  
-  # then load them
-  for(i in 1:length(packages))
-    require(packages[i], character.only=T, quietly=quiet, warn.conflicts=warn.conflicts)
-}
-
-# required packages
-packs <- c("dplyr", "reshape2", "runjags", "MCMCpack", "mcmcplots",
-  'parallel')
+################################
+# Load and fit multi-city models
+#
+# Code written by Mason Fidino
+################################
 
 
-# load the packages
-package_load(packs)
-
-
-dat <- read.csv("./data/detection_data.csv")
-
+# Read in the data
+det_data <- read.csv("./data/detection_data.csv")
 
 # number of sites
-nsite <- nrow(dat) - 2 # lost two  austin sites
+nsite <- nrow(det_data) - 2 # lost two  austin sites
 
 # number of cities
-ncity <- length(unique(dat$city))
+ncity <- length(unique(det_data$city))
 
 # number of patch level parameters (including intercept)
 npatch_covs <- 2
@@ -36,55 +21,61 @@ npatch_covs <- 2
 ncity_covs <- 3
 
 # number of detection parameters (including intercept)
-ndet_covs <- 3
+ndet_covs <- 1
 
 # number of species
 nspecies <- 8
 
 # make the patch level occupancy covariates
+#  this is for each sampling location per city
 bx <- matrix(1, ncol = npatch_covs, nrow = nsite)
 
-# read in the patch covariates
+# locate file path for each cities covariates
+#  they all end with "covs.csv" and are nested in the data folder
+patch_cov_path <- list.files(path = "./data/",
+                             pattern = "covs.csv", full.names = TRUE)
 
-my_covs <- list.files(path = "./data/", pattern = "covs.csv", full.names = TRUE)
+# read in the patch covs and turn list of dataframes into a single dataframe
+patch_covs <- lapply(patch_cov_path, read.csv, header= TRUE, stringsAsFactors = FALSE)
+patch_covs <- bind_rows(patch_covs)
 
-my_dfs <- lapply(my_covs, read.csv, header= TRUE, stringsAsFactors = FALSE)
-my_dfs <- bind_rows(my_dfs)
+#### continue from here ###########
+
 # read in all the sites as we need the locationID
 all_sites <- read.csv("./data/uwin_all_sites.csv", stringsAsFactors = FALSE)[,-2]
 
-my_dfs <- left_join(my_dfs, all_sites[,c(1,2)], by = c("site" = "LocationName" ))
+patch_covs <- left_join(patch_covs, all_sites[,c(1,2)], by = c("site" = "LocationName" ))
 
-# work on making the site code in my_dfs
-sc_tmp <- stringr::str_pad(my_dfs$LocationID, width = 3, pad = "0")
-sc_tmp <- paste(tolower(my_dfs$city), sc_tmp, sep = "-")
-my_dfs$site_code <- sc_tmp
+# work on making the site code in patch_covs
+sc_tmp <- stringr::str_pad(patch_covs$LocationID, width = 3, pad = "0")
+sc_tmp <- paste(tolower(patch_covs$city), sc_tmp, sep = "-")
+patch_covs$site_code <- sc_tmp
 
 
 # compile down to just the sites that we have data for
-my_dfs <- my_dfs[which(my_dfs$site_code %in% as.character(dat$site_code)),]
+patch_covs <- patch_covs[which(patch_covs$site_code %in% as.character(det_data$site_code)),]
 
-ds <-as.character(dat$site_code)
+ds <-as.character(det_data$site_code)
 
-dat <- dat[-which(dat$site_code %in% ds[-which(ds %in% my_dfs$site_code)]),]
+det_data <- det_data[-which(det_data$site_code %in% ds[-which(ds %in% patch_covs$site_code)]),]
 # make a numeric vector for which city it is
-city_vec <- as.numeric(dat$city)
+city_vec <- as.numeric(det_data$city)
 
 
 # make the urbanization covariate
 
 
-urb500 <- prcomp(my_dfs[,c(4,7,10)], scale. = TRUE)
-urb1000 <- prcomp(my_dfs[,c(5,8,11)], scale. = TRUE)
-urb4000 <- prcomp(my_dfs[,c(6,9,12)], scale. = TRUE)
+urb500 <- prcomp(patch_covs[,c(4,7,10)], scale. = TRUE)
+urb1000 <- prcomp(patch_covs[,c(5,8,11)], scale. = TRUE)
+urb4000 <- prcomp(patch_covs[,c(6,9,12)], scale. = TRUE)
 
 urb <- data.frame(urb = urb500$x[,1], urb1 = urb1000$x[,1], urb4 = urb4000$x[,1])
 
-my_meds <- data.frame(city = my_dfs$city, urb = urb$urb1) %>% 
+my_meds <- data.frame(city = patch_covs$city, urb = urb$urb1) %>% 
   group_by(city) %>% 
   summarise(um = median(urb))
 
-to_plot <- data.frame(city = factor(my_dfs$city, levels = my_meds$city),
+to_plot <- data.frame(city = factor(patch_covs$city, levels = my_meds$city),
                       urb = urb$urb1)
 
 boxplot(urb ~ city, data = to_plot)
@@ -92,7 +83,7 @@ boxplot(urb ~ city, data = to_plot)
 bx[,2] <- urb$urb1
 # make the patch level detection covariates
 dx <- matrix(1, ncol = ndet_covs, nsite)
-dx[,2] <- as.numeric(scale(log(dat$photos)))
+dx[,2] <- as.numeric(scale(log(det_data$photos)))
 dx[,3] <- dx[,2] ^ 2
 
 # bring in the city covs
@@ -111,8 +102,8 @@ U[,-1] <- scale_cdat[,to_keep_city] %>% as.matrix
 
 # do raccoon analysis
 data_list <- list(
-  y = dat$raccoon,
-  J = dat$J,
+  y = det_data$raccoon,
+  J = det_data$J,
   ncity = ncity,
   nsite = nsite,
   npatch_covs = npatch_covs,
@@ -163,7 +154,7 @@ inits <- function(chain){
   )
   )
 }
-hm <-table(z, dat$city)
+hm <-table(z, det_data$city)
 
 hm <- hm[2,] / colSums(hm)
 
@@ -183,8 +174,8 @@ rm(raccoon)
 
 # do rabbit
 data_list <- list(
-  y = dat$rabbit,
-  J = dat$J,
+  y = det_data$rabbit,
+  J = det_data$J,
   ncity = ncity,
   nsite = nsite,
   npatch_covs = npatch_covs,
@@ -234,7 +225,7 @@ inits <- function(chain){
   )
   )
 }
-hm <-table(z, dat$city)
+hm <-table(z, det_data$city)
 
 hm <- hm[2,] / colSums(hm)
 
@@ -253,8 +244,8 @@ rm(rabbit)
 
 # do coyote
 #data_list <- list(
-#  y = dat$coyote,
-#  J = dat$J,
+#  y = det_data$coyote,
+#  J = det_data$J,
 #  ncity = ncity,
 #  nsite = nsite,
 #  npatch_covs = npatch_covs,
@@ -320,7 +311,7 @@ rm(rabbit)
 #rm(coyote)
 
 # do opossum
-oy <- dat[-grep("deco|foco", as.character(dat$city)),]
+oy <- det_data[-grep("deco|foco", as.character(det_data$city)),]
 data_list <- list(
   y = oy$opossum,
   J = oy$J,
@@ -329,8 +320,8 @@ data_list <- list(
   npatch_covs = npatch_covs,
   ncity_covs = ncity_covs,
   ndet_covs = ndet_covs,
-  bx = bx[-grep("deco|foco", as.character(dat$city)),],
-  dx = dx[-grep("deco|foco", as.character(dat$city)),],
+  bx = bx[-grep("deco|foco", as.character(det_data$city)),],
+  dx = dx[-grep("deco|foco", as.character(det_data$city)),],
   U = U[-c(3,4),],
   city_vec = as.numeric(factor(as.character(oy$city)))
 )
@@ -373,7 +364,7 @@ inits <- function(chain){
   )
   )
 }
-hm <-table(z, dat$city)
+hm <-table(z, det_data$city)
 
 hm <- hm[2,] / colSums(hm)
 
@@ -391,8 +382,8 @@ rm(opossum)
 
 # do skunk
 data_list <- list(
-  y = dat$skunk,
-  J = dat$J,
+  y = det_data$skunk,
+  J = det_data$J,
   ncity = ncity,
   nsite = nsite,
   npatch_covs = npatch_covs,
@@ -442,7 +433,7 @@ inits <- function(chain){
   )
   )
 }
-hm <-table(z, dat$city)
+hm <-table(z, det_data$city)
 
 hm <- hm[2,] / colSums(hm)
 
@@ -462,8 +453,8 @@ rm(skunk)
 
 # do redfox
 data_list <- list(
-  y = dat$redfox,
-  J = dat$J,
+  y = det_data$redfox,
+  J = det_data$J,
   ncity = ncity,
   nsite = nsite,
   npatch_covs = npatch_covs,
@@ -513,7 +504,7 @@ inits <- function(chain){
   )
   )
 }
-hm <-table(z, dat$city)
+hm <-table(z, det_data$city)
 
 hm <- hm[2,] / colSums(hm)
 
@@ -532,8 +523,8 @@ rm(fox)
 
 # do g squ
 data_list <- list(
-  y = dat$graysquirrel,
-  J = dat$J,
+  y = det_data$graysquirrel,
+  J = det_data$J,
   ncity = ncity,
   nsite = nsite,
   npatch_covs = npatch_covs,
@@ -583,7 +574,7 @@ inits <- function(chain){
   )
   )
 }
-hm <-table(z, dat$city)
+hm <-table(z, det_data$city)
 
 hm <- hm[2,] / colSums(hm)
 
@@ -602,7 +593,7 @@ saveRDS(g_squ, "./results/g_squ.RDS")
 rm(g_squ)
 
 # do f squ
-oy <- dat[-grep("mawi", as.character(dat$city)),]
+oy <- det_data[-grep("mawi", as.character(det_data$city)),]
 data_list <- list(
   y = oy$foxsquirrel,
   J = oy$J,
@@ -611,8 +602,8 @@ data_list <- list(
   npatch_covs = npatch_covs,
   ncity_covs = ncity_covs,
   ndet_covs = ndet_covs,
-  bx = bx[-grep("mawi", as.character(dat$city)),],
-  dx = dx[-grep("mawi", as.character(dat$city)),],
+  bx = bx[-grep("mawi", as.character(det_data$city)),],
+  dx = dx[-grep("mawi", as.character(det_data$city)),],
   U = U[-8,],
   city_vec = as.numeric(factor(as.character(oy$city)))
 )
@@ -655,7 +646,7 @@ inits <- function(chain){
   )
   )
 }
-hm <-table(z, dat$city)
+hm <-table(z, det_data$city)
 
 hm <- hm[2,] / colSums(hm)
 
