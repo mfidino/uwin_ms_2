@@ -81,7 +81,6 @@ my_meds <- data.frame(city = patch_covs$city, urb = urb$urb1) %>%
 to_plot <- data.frame(city = factor(patch_covs$city, levels = my_meds$city),
                       urb = urb$urb1)
 
-boxplot(urb ~ city, data = to_plot)
 
 bx[,2] <- urb$urb1
 # make the patch level detection covariates
@@ -131,9 +130,7 @@ inits <- function(chain){
       sigma.int = rgamma(1, 1, 1),
       sigma.urb = rgamma(1, 1, 1),
       sigma.lat = rgamma(1, 1, 1),
-      rho12 = runif(1, -1, 1),
-      rho13 = runif(1, -1, 1),
-      rho23 = runif(1, -1, 1),
+      rho_cor = runif(1, -1, 1),
       .RNG.name = switch(chain,
                          "1" = "base::Wichmann-Hill",
                          "2" = "base::Marsaglia-Multicarry",
@@ -160,8 +157,8 @@ inits <- function(chain){
 }
 # Settings for the jags models
 to_monitor <- c("B", "G", "D",
-              "rho_mu", "rho_sigma", "rho12","rho13","rho23",
-              "sigma.int", "sigma.urb", "sigma.lat", "z")
+              "rho_mu", "rho_sigma", "rho_cor",
+              "sigma.int", "sigma.urb", "z")
 my_model <- "./jags_scripts/mvn_occupancy_3preds.R"
 nchain <- 6
 nadapt <- 2e6
