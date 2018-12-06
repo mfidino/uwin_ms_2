@@ -63,11 +63,9 @@ ds <-as.character(det_data$site_code)
 
 det_data <- det_data[-which(det_data$site_code %in% ds[-which(ds %in% patch_covs$site_code)]),]
 
-# calculate which species were detected at least once per city
-det_events <- det_data %>% 
-  group_by(city) %>% 
-  summarise_if(is.numeric, sum)
-det_events[,c(3:10)] <- as.numeric(det_events[,c(3:10)] > 0)
+# bring in the number
+det_events <- read.csv("./data/species_in_cities.csv")
+
 
 has_species <- matrix(0, ncol = nspecies, nrow = nrow(det_data))
 
