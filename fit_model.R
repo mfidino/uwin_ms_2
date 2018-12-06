@@ -5,11 +5,12 @@
 # Code written by Mason Fidino
 ################################
 
-
+source("sourcer.R")
 
 
 # Read in the data
-det_data <- read.csv("./data/detection_data.csv")
+det_data <- read.csv("./data/detection_data.csv", stringsAsFactors = FALSE)
+det_data <- det_data[order(det_data$city),]
 
 # number of sites
 nsite <- nrow(det_data) - 2 # lost two  austin sites
@@ -61,16 +62,33 @@ patch_covs <- patch_covs[which(patch_covs$site_code %in% as.character(det_data$s
 ds <-as.character(det_data$site_code)
 
 det_data <- det_data[-which(det_data$site_code %in% ds[-which(ds %in% patch_covs$site_code)]),]
+
+# bring in the number
+det_events <- read.csv("./data/species_in_cities.csv")
+
+
+has_species <- matrix(0, ncol = nspecies, nrow = nrow(det_data))
+
+for(species in 1:nspecies){
+  has_species[,species] <- det_events[, species +2] %>% 
+    unlist %>% 
+    as.numeric %>% 
+    rep(., times = as.numeric(table(det_data$city)) )
+
+}
+
+has_species <- data.frame(has_species)
+colnames(has_species) <- colnames(det_data)[4:11]
 # make a numeric vector for which city it is
-city_vec <- as.numeric(det_data$city)
+city_vec <- as.numeric(factor(det_data$city))
 
 
 # make the urbanization covariate
 
 
-urb500 <- prcomp(patch_covs[,c(4,7,10)], scale. = TRUE)
-urb1000 <- prcomp(patch_covs[,c(5,8,11)], scale. = TRUE)
-urb4000 <- prcomp(patch_covs[,c(6,9,12)], scale. = TRUE)
+urb500 <- prcomp(patch_covs[,c(7,10)], scale. = TRUE)
+urb1000 <- prcomp(patch_covs[,c(8,11)], scale. = TRUE)
+urb4000 <- prcomp(patch_covs[,c(9,12)], scale. = TRUE)
 
 urb <- data.frame(urb = urb500$x[,1], urb1 = urb1000$x[,1], urb4 = urb4000$x[,1])
 
@@ -81,7 +99,6 @@ my_meds <- data.frame(city = patch_covs$city, urb = urb$urb1) %>%
 to_plot <- data.frame(city = factor(patch_covs$city, levels = my_meds$city),
                       urb = urb$urb1)
 
-boxplot(urb ~ city, data = to_plot)
 
 bx[,2] <- urb$urb1
 # make the patch level detection covariates
@@ -104,6 +121,7 @@ U[,-1] <- scale_cdat[,to_keep_city] %>% as.matrix
 # do raccoon analysis
 data_list <- list(
   y = det_data$raccoon,
+  has_species = has_species$raccoon,
   J = det_data$J,
   ncity = ncity,
   nsite = nsite,
@@ -120,48 +138,11 @@ z <- data_list$y
 z[z>1] <- 1
 
 
-inits <- function(chain){
-  gen_list <- function(chain = chain){
-    list( 
-      z = z,
-      B = array(rnorm(ncity * npatch_covs), 
-                dim = c(ncity, npatch_covs)),
-      G = array(rnorm(ncity_covs * npatch_covs), 
-                dim = c(npatch_covs, ncity_covs)),
-      sigma.int = rgamma(1, 1, 1),
-      sigma.urb = rgamma(1, 1, 1),
-      sigma.lat = rgamma(1, 1, 1),
-      rho12 = runif(1, -1, 1),
-      rho13 = runif(1, -1, 1),
-      rho23 = runif(1, -1, 1),
-      .RNG.name = switch(chain,
-                         "1" = "base::Wichmann-Hill",
-                         "2" = "base::Marsaglia-Multicarry",
-                         "3" = "base::Super-Duper",
-                         "4" = "base::Mersenne-Twister",
-                         "5" = "base::Wichmann-Hill",
-                         "6" = "base::Marsaglia-Multicarry",
-                         "7" = "base::Super-Duper",
-                         "8" = "base::Mersenne-Twister"),
-      .RNG.seed = sample(1:1e+06, 1)
-    )
-  }
-  return(switch(chain,           
-                "1" = gen_list(chain),
-                "2" = gen_list(chain),
-                "3" = gen_list(chain),
-                "4" = gen_list(chain),
-                "5" = gen_list(chain),
-                "6" = gen_list(chain),
-                "7" = gen_list(chain),
-                "8" = gen_list(chain)
-  )
-  )
-}
+
 # Settings for the jags models
 to_monitor <- c("B", "G", "D",
-              "rho_mu", "rho_sigma", "rho12","rho13","rho23",
-              "sigma.int", "sigma.urb", "sigma.lat", "z")
+              "rho_mu", "rho_sigma", "rho_cor",
+              "sigma.int", "sigma.urb", "z")
 my_model <- "./jags_scripts/mvn_occupancy_3preds.R"
 nchain <- 6
 nadapt <- 2e6
@@ -186,6 +167,7 @@ rm(raccoon)
 # do rabbit
 data_list <- list(
   y = det_data$rabbit,
+  has_species = has_species$rabbit,
   J = det_data$J,
   ncity = ncity,
   nsite = nsite,
@@ -200,41 +182,6 @@ data_list <- list(
 
 z <- data_list$y
 z[z>1] <- 1
-inits <- function(chain){
-  gen_list <- function(chain = chain){
-    list( 
-      z = z,
-      B = array(rnorm(ncity * npatch_covs), 
-                dim = c(ncity, npatch_covs)),
-      G = array(rnorm(ncity_covs * npatch_covs), 
-                dim = c(npatch_covs, ncity_covs)),
-      sigma.int = rgamma(1, 1, 1),
-      sigma.urb = rgamma(1, 1, 1),
-      rho_mat = runif(1, -1, 1),
-      .RNG.name = switch(chain,
-                         "1" = "base::Wichmann-Hill",
-                         "2" = "base::Marsaglia-Multicarry",
-                         "3" = "base::Super-Duper",
-                         "4" = "base::Mersenne-Twister",
-                         "5" = "base::Wichmann-Hill",
-                         "6" = "base::Marsaglia-Multicarry",
-                         "7" = "base::Super-Duper",
-                         "8" = "base::Mersenne-Twister"),
-      .RNG.seed = sample(1:1e+06, 1)
-    )
-  }
-  return(switch(chain,           
-                "1" = gen_list(chain),
-                "2" = gen_list(chain),
-                "3" = gen_list(chain),
-                "4" = gen_list(chain),
-                "5" = gen_list(chain),
-                "6" = gen_list(chain),
-                "7" = gen_list(chain),
-                "8" = gen_list(chain)
-  )
-  )
-}
 
 
 rabbit <- run.jags(
@@ -252,6 +199,7 @@ rm(rabbit)
 # do coyote
 data_list <- list(
  y = det_data$coyote,
+ has_species = has_species$coyote,
  J = det_data$J,
  ncity = ncity,
  nsite = nsite,
@@ -267,42 +215,6 @@ data_list <- list(
 
 z <- data_list$y
 z[z>1] <- 1
-inits <- function(chain){
- gen_list <- function(chain = chain){
-   list(
-     z = z,
-     B = array(rnorm(ncity * npatch_covs),
-               dim = c(ncity, npatch_covs)),
-     G = array(rnorm(ncity_covs * npatch_covs),
-               dim = c(npatch_covs, ncity_covs)),
-     sigma.int = rgamma(1, 1, 1),
-     sigma.urb = rgamma(1, 1, 1),
-     rho_mat = runif(1, -1, 1),
-     .RNG.name = switch(chain,
-                        "1" = "base::Wichmann-Hill",
-                        "2" = "base::Marsaglia-Multicarry",
-                        "3" = "base::Super-Duper",
-                        "4" = "base::Mersenne-Twister",
-                        "5" = "base::Wichmann-Hill",
-                        "6" = "base::Marsaglia-Multicarry",
-                        "7" = "base::Super-Duper",
-                        "8" = "base::Mersenne-Twister"),
-     .RNG.seed = sample(1:1e+06, 1)
-   )
- }
- return(switch(chain,
-               "1" = gen_list(chain),
-               "2" = gen_list(chain),
-               "3" = gen_list(chain),
-               "4" = gen_list(chain),
-               "5" = gen_list(chain),
-               "6" = gen_list(chain),
-               "7" = gen_list(chain),
-               "8" = gen_list(chain)
- )
- )
-}
-
 
 coyote <- run.jags(
   model = my_model,
@@ -316,79 +228,43 @@ coyote <- run.jags(
 saveRDS(coyote, "./results/coyote.RDS")
 rm(coyote)
 
-# do opossum
-# oy <- det_data[-grep("deco|foco", as.character(det_data$city)),]
-# data_list <- list(
-#   y = oy$opossum,
-#   J = oy$J,
-#   ncity = ncity-2,
-#   nsite = nrow(oy),
-#   npatch_covs = npatch_covs,
-#   ncity_covs = ncity_covs,
-#   ndet_covs = ndet_covs,
-#   bx = bx[-grep("deco|foco", as.character(det_data$city)),],
-#   dx = dx[-grep("deco|foco", as.character(det_data$city)),],
-#   U = U[-c(3,4),],
-#   city_vec = as.numeric(factor(as.character(oy$city)))
-# )
-# 
-# 
-# z <- data_list$y
-# z[z>1] <- 1
-# inits <- function(chain){
-#   gen_list <- function(chain = chain){
-#     list( 
-#       z = z,
-#       B = array(rnorm(ncity-2 * npatch_covs), 
-#                 dim = c(ncity-2, npatch_covs)),
-#       G = array(rnorm(ncity_covs * npatch_covs), 
-#                 dim = c(npatch_covs, ncity_covs)),
-#       sigma.int = rgamma(1, 1, 1),
-#       sigma.urb = rgamma(1, 1, 1),
-#       rho_mat = runif(1, -1, 1),
-#       .RNG.name = switch(chain,
-#                          "1" = "base::Wichmann-Hill",
-#                          "2" = "base::Marsaglia-Multicarry",
-#                          "3" = "base::Super-Duper",
-#                          "4" = "base::Mersenne-Twister",
-#                          "5" = "base::Wichmann-Hill",
-#                          "6" = "base::Marsaglia-Multicarry",
-#                          "7" = "base::Super-Duper",
-#                          "8" = "base::Mersenne-Twister"),
-#       .RNG.seed = sample(1:1e+06, 1)
-#     )
-#   }
-#   return(switch(chain,           
-#                 "1" = gen_list(chain),
-#                 "2" = gen_list(chain),
-#                 "3" = gen_list(chain),
-#                 "4" = gen_list(chain),
-#                 "5" = gen_list(chain),
-#                 "6" = gen_list(chain),
-#                 "7" = gen_list(chain),
-#                 "8" = gen_list(chain)
-#   )
-#   )
-# }
-# hm <-table(z, det_data$city)
-# 
-# hm <- hm[2,] / colSums(hm)
-# 
-# opossum <- run.jags(
-#   model = "./jags_scripts/mvn_int_slope2.R",
-#   data = data_list,
-#   n.chains = 6,
-#   monitor = c("B", "G", "D",
-#               "rho_mu", "rho_sigma", "rho_mat","sigma.int", "sigma.urb"),
-#   adapt = 2e6,
-#   burnin = 2e6,  sample = 166667, method = 'parallel',
-#   inits = inits, summarise = FALSE, modules = "glm")
-# saveRDS(opossum, "./results/opossum_5city.RDS")
-# rm(opossum)
+ #do opossum
+ data_list <- list(
+   y = y$opossum,
+   has_species = has_species$opossum,
+   J = y$J,
+   ncity = ncity,
+   nsite = nrow(y),
+   npatch_covs = npatch_covs,
+   ncity_covs = ncity_covs,
+   ndet_covs = ndet_covs,
+   bx = bx,
+   dx = dx,
+   U = U,
+   city_vec = city_vec
+ )
+ 
+ 
+ z <- data_list$y
+ z[z>1] <- 1
+
+ 
+ opossum <- run.jags(
+   model = my_model,
+   data = data_list,
+   n.chains = nchain,
+   monitor = to_monitor,
+   adapt = nadapt,
+   burnin = nburnin,  sample = nsample, thin = nthin, method = my_method,
+   inits = inits, summarise = FALSE, modules = "glm")
+ 
+ saveRDS(opossum, "./results/opossum.RDS")
+ rm(opossum)
 
 # do skunk
 data_list <- list(
   y = det_data$skunk,
+  has_species = has_species$skunk,
   J = det_data$J,
   ncity = ncity,
   nsite = nsite,
@@ -404,41 +280,6 @@ data_list <- list(
 
 z <- data_list$y
 z[z>1] <- 1
-inits <- function(chain){
-  gen_list <- function(chain = chain){
-    list( 
-      z = z,
-      B = array(rnorm(ncity * npatch_covs), 
-                dim = c(ncity, npatch_covs)),
-      G = array(rnorm(ncity_covs * npatch_covs), 
-                dim = c(npatch_covs, ncity_covs)),
-      sigma.int = rgamma(1, 1, 1),
-      sigma.urb = rgamma(1, 1, 1),
-      rho_mat = runif(1, -1, 1),
-      .RNG.name = switch(chain,
-                         "1" = "base::Wichmann-Hill",
-                         "2" = "base::Marsaglia-Multicarry",
-                         "3" = "base::Super-Duper",
-                         "4" = "base::Mersenne-Twister",
-                         "5" = "base::Wichmann-Hill",
-                         "6" = "base::Marsaglia-Multicarry",
-                         "7" = "base::Super-Duper",
-                         "8" = "base::Mersenne-Twister"),
-      .RNG.seed = sample(1:1e+06, 1)
-    )
-  }
-  return(switch(chain,           
-                "1" = gen_list(chain),
-                "2" = gen_list(chain),
-                "3" = gen_list(chain),
-                "4" = gen_list(chain),
-                "5" = gen_list(chain),
-                "6" = gen_list(chain),
-                "7" = gen_list(chain),
-                "8" = gen_list(chain)
-  )
-  )
-}
 
 skunk <- run.jags(
   model = my_model,
@@ -456,6 +297,7 @@ rm(skunk)
 # do redfox
 data_list <- list(
   y = det_data$redfox,
+  has_species = has_species$redfox,
   J = det_data$J,
   ncity = ncity,
   nsite = nsite,
@@ -471,53 +313,15 @@ data_list <- list(
 
 z <- data_list$y
 z[z>1] <- 1
-inits <- function(chain){
-  gen_list <- function(chain = chain){
-    list( 
-      z = z,
-      B = array(rnorm(ncity * npatch_covs), 
-                dim = c(ncity, npatch_covs)),
-      G = array(rnorm(ncity_covs * npatch_covs), 
-                dim = c(npatch_covs, ncity_covs)),
-      sigma.int = rgamma(1, 1, 1),
-      sigma.urb = rgamma(1, 1, 1),
-      rho_mat = runif(1, -1, 1),
-      .RNG.name = switch(chain,
-                         "1" = "base::Wichmann-Hill",
-                         "2" = "base::Marsaglia-Multicarry",
-                         "3" = "base::Super-Duper",
-                         "4" = "base::Mersenne-Twister",
-                         "5" = "base::Wichmann-Hill",
-                         "6" = "base::Marsaglia-Multicarry",
-                         "7" = "base::Super-Duper",
-                         "8" = "base::Mersenne-Twister"),
-      .RNG.seed = sample(1:1e+06, 1)
-    )
-  }
-  return(switch(chain,           
-                "1" = gen_list(chain),
-                "2" = gen_list(chain),
-                "3" = gen_list(chain),
-                "4" = gen_list(chain),
-                "5" = gen_list(chain),
-                "6" = gen_list(chain),
-                "7" = gen_list(chain),
-                "8" = gen_list(chain)
-  )
-  )
-}
-hm <-table(z, det_data$city)
 
-hm <- hm[2,] / colSums(hm)
 
 fox <- run.jags(
-  model = "./jags_scripts/mvn_int_slope2.R",
+  model = my_model,
   data = data_list,
-  n.chains = 6,
-  monitor = c("B", "G", "D",
-              "rho_mu", "rho_sigma", "rho_mat","sigma.int", "sigma.urb","z"),
-  adapt = 2e6,
-  burnin = 2e6,  sample = 166667, method = 'parallel',
+  n.chains = nchain,
+  monitor = to_monitor,
+  adapt = nadapt,
+  burnin = nburnin,  sample = nsample, thin = nthin, method = my_method,
   inits = inits, summarise = FALSE, modules = "glm")
 
 saveRDS(fox, "./results/fox.RDS")
@@ -526,6 +330,7 @@ rm(fox)
 # do g squ
 data_list <- list(
   y = det_data$graysquirrel,
+  has_species = has_species$graysquirrel,
   J = det_data$J,
   ncity = ncity,
   nsite = nsite,
@@ -541,53 +346,16 @@ data_list <- list(
 
 z <- data_list$y
 z[z>1] <- 1
-inits <- function(chain){
-  gen_list <- function(chain = chain){
-    list( 
-      z = z,
-      B = array(rnorm(ncity * npatch_covs), 
-                dim = c(ncity, npatch_covs)),
-      G = array(rnorm(ncity_covs * npatch_covs), 
-                dim = c(npatch_covs, ncity_covs)),
-      sigma.int = rgamma(1, 1, 1),
-      sigma.urb = rgamma(1, 1, 1),
-      rho_mat = runif(1, -1, 1),
-      .RNG.name = switch(chain,
-                         "1" = "base::Wichmann-Hill",
-                         "2" = "base::Marsaglia-Multicarry",
-                         "3" = "base::Super-Duper",
-                         "4" = "base::Mersenne-Twister",
-                         "5" = "base::Wichmann-Hill",
-                         "6" = "base::Marsaglia-Multicarry",
-                         "7" = "base::Super-Duper",
-                         "8" = "base::Mersenne-Twister"),
-      .RNG.seed = sample(1:1e+06, 1)
-    )
-  }
-  return(switch(chain,           
-                "1" = gen_list(chain),
-                "2" = gen_list(chain),
-                "3" = gen_list(chain),
-                "4" = gen_list(chain),
-                "5" = gen_list(chain),
-                "6" = gen_list(chain),
-                "7" = gen_list(chain),
-                "8" = gen_list(chain)
-  )
-  )
-}
-hm <-table(z, det_data$city)
 
-hm <- hm[2,] / colSums(hm)
+
 
 g_squ <- run.jags(
-  model = "./jags_scripts/mvn_int_slope2.R",
+  model = my_model,
   data = data_list,
-  n.chains = 6,
-  monitor = c("B", "G", "D",
-              "rho_mu", "rho_sigma", "rho_mat","sigma.int", "sigma.urb","z"),
-  adapt = 2e6,
-  burnin = 2e6,  sample = 166667, method = 'parallel',
+  n.chains = nchain,
+  monitor = to_monitor,
+  adapt = nadapt,
+  burnin = nburnin,  sample = nsample, thin = nthin, method = my_method,
   inits = inits, summarise = FALSE, modules = "glm")
 
 
@@ -595,71 +363,34 @@ saveRDS(g_squ, "./results/g_squ.RDS")
 rm(g_squ)
 
 # do f squ
-oy <- det_data[-grep("mawi", as.character(det_data$city)),]
+
 data_list <- list(
-  y = oy$foxsquirrel,
-  J = oy$J,
-  ncity = ncity-1,
-  nsite = nrow(oy),
+  y = det_data$foxsquirrel,
+  has_species = has_species$foxsquirrel,
+  J = det_data$J,
+  ncity = ncity,
+  nsite = nrow(det_data),
   npatch_covs = npatch_covs,
   ncity_covs = ncity_covs,
   ndet_covs = ndet_covs,
-  bx = bx[-grep("mawi", as.character(det_data$city)),],
-  dx = dx[-grep("mawi", as.character(det_data$city)),],
-  U = U[-8,],
-  city_vec = as.numeric(factor(as.character(oy$city)))
-)
+  bx = bx,
+  dx = dx,
+  U = U,
+  city_vec = city_vec)
+
 
 
 z <- data_list$y
 z[z>1] <- 1
-inits <- function(chain){
-  gen_list <- function(chain = chain){
-    list( 
-      z = z,
-      B = array(rnorm(ncity-1 * npatch_covs), 
-                dim = c(ncity-1, npatch_covs)),
-      G = array(rnorm(ncity_covs * npatch_covs), 
-                dim = c(npatch_covs, ncity_covs)),
-      sigma.int = rgamma(1, 1, 1),
-      sigma.urb = rgamma(1, 1, 1),
-      rho_mat = runif(1, -1, 1),
-      .RNG.name = switch(chain,
-                         "1" = "base::Wichmann-Hill",
-                         "2" = "base::Marsaglia-Multicarry",
-                         "3" = "base::Super-Duper",
-                         "4" = "base::Mersenne-Twister",
-                         "5" = "base::Wichmann-Hill",
-                         "6" = "base::Marsaglia-Multicarry",
-                         "7" = "base::Super-Duper",
-                         "8" = "base::Mersenne-Twister"),
-      .RNG.seed = sample(1:1e+06, 1)
-    )
-  }
-  return(switch(chain,           
-                "1" = gen_list(chain),
-                "2" = gen_list(chain),
-                "3" = gen_list(chain),
-                "4" = gen_list(chain),
-                "5" = gen_list(chain),
-                "6" = gen_list(chain),
-                "7" = gen_list(chain),
-                "8" = gen_list(chain)
-  )
-  )
-}
-hm <-table(z, det_data$city)
 
-hm <- hm[2,] / colSums(hm)
 
 f_squ <- run.jags(
-  model = "./jags_scripts/mvn_int_slope2.R",
+  model = my_model,
   data = data_list,
-  n.chains = 6,
-  monitor = c("B", "G", "D",
-              "rho_mu", "rho_sigma", "rho_mat","sigma.int", "sigma.urb","z"),
-  adapt = 2e6,
-  burnin = 2e6,  sample = 166667, method = 'parallel',
+  n.chains = nchain,
+  monitor = to_monitor,
+  adapt = nadapt,
+  burnin = nburnin,  sample = nsample, thin = nthin, method = my_method,
   inits = inits, summarise = FALSE, modules = "glm")
 
 saveRDS(f_squ, "./results/f_squ.RDS")
