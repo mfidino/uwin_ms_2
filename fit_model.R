@@ -197,41 +197,6 @@ data_list <- list(
 
 z <- data_list$y
 z[z>1] <- 1
-inits <- function(chain){
-  gen_list <- function(chain = chain){
-    list( 
-      z = z,
-      B = array(rnorm(ncity * npatch_covs), 
-                dim = c(ncity, npatch_covs)),
-      G = array(rnorm(ncity_covs * npatch_covs), 
-                dim = c(npatch_covs, ncity_covs)),
-      sigma.int = rgamma(1, 1, 1),
-      sigma.urb = rgamma(1, 1, 1),
-      rho_mat = runif(1, -1, 1),
-      .RNG.name = switch(chain,
-                         "1" = "base::Wichmann-Hill",
-                         "2" = "base::Marsaglia-Multicarry",
-                         "3" = "base::Super-Duper",
-                         "4" = "base::Mersenne-Twister",
-                         "5" = "base::Wichmann-Hill",
-                         "6" = "base::Marsaglia-Multicarry",
-                         "7" = "base::Super-Duper",
-                         "8" = "base::Mersenne-Twister"),
-      .RNG.seed = sample(1:1e+06, 1)
-    )
-  }
-  return(switch(chain,           
-                "1" = gen_list(chain),
-                "2" = gen_list(chain),
-                "3" = gen_list(chain),
-                "4" = gen_list(chain),
-                "5" = gen_list(chain),
-                "6" = gen_list(chain),
-                "7" = gen_list(chain),
-                "8" = gen_list(chain)
-  )
-  )
-}
 
 
 rabbit <- run.jags(
@@ -264,42 +229,6 @@ data_list <- list(
 
 z <- data_list$y
 z[z>1] <- 1
-inits <- function(chain){
- gen_list <- function(chain = chain){
-   list(
-     z = z,
-     B = array(rnorm(ncity * npatch_covs),
-               dim = c(ncity, npatch_covs)),
-     G = array(rnorm(ncity_covs * npatch_covs),
-               dim = c(npatch_covs, ncity_covs)),
-     sigma.int = rgamma(1, 1, 1),
-     sigma.urb = rgamma(1, 1, 1),
-     rho_mat = runif(1, -1, 1),
-     .RNG.name = switch(chain,
-                        "1" = "base::Wichmann-Hill",
-                        "2" = "base::Marsaglia-Multicarry",
-                        "3" = "base::Super-Duper",
-                        "4" = "base::Mersenne-Twister",
-                        "5" = "base::Wichmann-Hill",
-                        "6" = "base::Marsaglia-Multicarry",
-                        "7" = "base::Super-Duper",
-                        "8" = "base::Mersenne-Twister"),
-     .RNG.seed = sample(1:1e+06, 1)
-   )
- }
- return(switch(chain,
-               "1" = gen_list(chain),
-               "2" = gen_list(chain),
-               "3" = gen_list(chain),
-               "4" = gen_list(chain),
-               "5" = gen_list(chain),
-               "6" = gen_list(chain),
-               "7" = gen_list(chain),
-               "8" = gen_list(chain)
- )
- )
-}
-
 
 coyote <- run.jags(
   model = my_model,
@@ -401,41 +330,6 @@ data_list <- list(
 
 z <- data_list$y
 z[z>1] <- 1
-inits <- function(chain){
-  gen_list <- function(chain = chain){
-    list( 
-      z = z,
-      B = array(rnorm(ncity * npatch_covs), 
-                dim = c(ncity, npatch_covs)),
-      G = array(rnorm(ncity_covs * npatch_covs), 
-                dim = c(npatch_covs, ncity_covs)),
-      sigma.int = rgamma(1, 1, 1),
-      sigma.urb = rgamma(1, 1, 1),
-      rho_mat = runif(1, -1, 1),
-      .RNG.name = switch(chain,
-                         "1" = "base::Wichmann-Hill",
-                         "2" = "base::Marsaglia-Multicarry",
-                         "3" = "base::Super-Duper",
-                         "4" = "base::Mersenne-Twister",
-                         "5" = "base::Wichmann-Hill",
-                         "6" = "base::Marsaglia-Multicarry",
-                         "7" = "base::Super-Duper",
-                         "8" = "base::Mersenne-Twister"),
-      .RNG.seed = sample(1:1e+06, 1)
-    )
-  }
-  return(switch(chain,           
-                "1" = gen_list(chain),
-                "2" = gen_list(chain),
-                "3" = gen_list(chain),
-                "4" = gen_list(chain),
-                "5" = gen_list(chain),
-                "6" = gen_list(chain),
-                "7" = gen_list(chain),
-                "8" = gen_list(chain)
-  )
-  )
-}
 
 skunk <- run.jags(
   model = my_model,
@@ -468,53 +362,18 @@ data_list <- list(
 
 z <- data_list$y
 z[z>1] <- 1
-inits <- function(chain){
-  gen_list <- function(chain = chain){
-    list( 
-      z = z,
-      B = array(rnorm(ncity * npatch_covs), 
-                dim = c(ncity, npatch_covs)),
-      G = array(rnorm(ncity_covs * npatch_covs), 
-                dim = c(npatch_covs, ncity_covs)),
-      sigma.int = rgamma(1, 1, 1),
-      sigma.urb = rgamma(1, 1, 1),
-      rho_mat = runif(1, -1, 1),
-      .RNG.name = switch(chain,
-                         "1" = "base::Wichmann-Hill",
-                         "2" = "base::Marsaglia-Multicarry",
-                         "3" = "base::Super-Duper",
-                         "4" = "base::Mersenne-Twister",
-                         "5" = "base::Wichmann-Hill",
-                         "6" = "base::Marsaglia-Multicarry",
-                         "7" = "base::Super-Duper",
-                         "8" = "base::Mersenne-Twister"),
-      .RNG.seed = sample(1:1e+06, 1)
-    )
-  }
-  return(switch(chain,           
-                "1" = gen_list(chain),
-                "2" = gen_list(chain),
-                "3" = gen_list(chain),
-                "4" = gen_list(chain),
-                "5" = gen_list(chain),
-                "6" = gen_list(chain),
-                "7" = gen_list(chain),
-                "8" = gen_list(chain)
-  )
-  )
-}
+
 hm <-table(z, det_data$city)
 
 hm <- hm[2,] / colSums(hm)
 
 fox <- run.jags(
-  model = "./jags_scripts/mvn_int_slope2.R",
+  model = my_model,
   data = data_list,
-  n.chains = 6,
-  monitor = c("B", "G", "D",
-              "rho_mu", "rho_sigma", "rho_mat","sigma.int", "sigma.urb","z"),
-  adapt = 2e6,
-  burnin = 2e6,  sample = 166667, method = 'parallel',
+  n.chains = nchain,
+  monitor = to_monitor,
+  adapt = nadapt,
+  burnin = nburnin,  sample = nsample, thin = nthin, method = my_method,
   inits = inits, summarise = FALSE, modules = "glm")
 
 saveRDS(fox, "./results/fox.RDS")
