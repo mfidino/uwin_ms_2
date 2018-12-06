@@ -9,7 +9,8 @@ source("sourcer.R")
 
 
 # Read in the data
-det_data <- read.csv("./data/detection_data.csv")
+det_data <- read.csv("./data/detection_data.csv", stringsAsFactors = FALSE)
+det_data <- det_data[order(det_data$city),]
 
 # number of sites
 nsite <- nrow(det_data) - 2 # lost two  austin sites
@@ -61,8 +62,27 @@ patch_covs <- patch_covs[which(patch_covs$site_code %in% as.character(det_data$s
 ds <-as.character(det_data$site_code)
 
 det_data <- det_data[-which(det_data$site_code %in% ds[-which(ds %in% patch_covs$site_code)]),]
+
+# calculate which species were detected at least once per city
+det_events <- det_data %>% 
+  group_by(city) %>% 
+  summarise_if(is.numeric, sum)
+det_events[,c(3:10)] <- as.numeric(det_events[,c(3:10)] > 0)
+
+has_species <- matrix(0, ncol = nspecies, nrow = nrow(det_data))
+
+for(species in 1:nspecies){
+  has_species[,species] <- det_events[, species +2] %>% 
+    unlist %>% 
+    as.numeric %>% 
+    rep(., times = as.numeric(table(det_data$city)) )
+
+}
+
+has_species <- data.frame(has_species)
+colnames(has_species) <- colnames(det_data)[4:11]
 # make a numeric vector for which city it is
-city_vec <- as.numeric(det_data$city)
+city_vec <- as.numeric(factor(det_data$city))
 
 
 # make the urbanization covariate
@@ -103,6 +123,7 @@ U[,-1] <- scale_cdat[,to_keep_city] %>% as.matrix
 # do raccoon analysis
 data_list <- list(
   y = det_data$raccoon,
+  has_species = has_species$raccoon,
   J = det_data$J,
   ncity = ncity,
   nsite = nsite,

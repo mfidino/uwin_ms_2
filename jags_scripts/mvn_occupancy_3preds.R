@@ -2,7 +2,7 @@ model{
   # Latent state model
   for(site in 1:nsite){
     logit(psi[site]) <- inprod(B[city_vec[site], ], bx[site, ])
-    z[site] ~ dbern(psi[site])
+    z[site] ~ dbern(psi[site] * has_species[site])
   }
   # Observation model
   for(site in 1:nsite){
