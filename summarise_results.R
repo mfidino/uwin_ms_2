@@ -15,13 +15,10 @@ for(i in 1:length(my_rds)){
                             "_matrix.csv"))
 }
 
-
-
 my_res <- list.files("./results/", pattern = "csv", full.names = TRUE)
 
 # remove OG opossum and gray squirrel
 my_res <- my_res[-4]
-
 
 
 
