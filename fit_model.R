@@ -5,7 +5,7 @@
 # Code written by Mason Fidino
 ################################
 
-
+source("sourcer.R")
 
 
 # Read in the data
@@ -68,9 +68,9 @@ city_vec <- as.numeric(det_data$city)
 # make the urbanization covariate
 
 
-urb500 <- prcomp(patch_covs[,c(4,7,10)], scale. = TRUE)
-urb1000 <- prcomp(patch_covs[,c(5,8,11)], scale. = TRUE)
-urb4000 <- prcomp(patch_covs[,c(6,9,12)], scale. = TRUE)
+urb500 <- prcomp(patch_covs[,c(7,10)], scale. = TRUE)
+urb1000 <- prcomp(patch_covs[,c(8,11)], scale. = TRUE)
+urb4000 <- prcomp(patch_covs[,c(9,12)], scale. = TRUE)
 
 urb <- data.frame(urb = urb500$x[,1], urb1 = urb1000$x[,1], urb4 = urb4000$x[,1])
 
