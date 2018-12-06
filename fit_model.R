@@ -1,8 +1,11 @@
+
 ################################
 # Load and fit multi-city models
 #
 # Code written by Mason Fidino
 ################################
+
+
 
 
 # Read in the data
@@ -18,7 +21,7 @@ ncity <- length(unique(det_data$city))
 npatch_covs <- 2
 
 # number of city level parameters (including intercept)
-ncity_covs <- 3
+ncity_covs <- 4
 
 # number of detection parameters (including intercept)
 ndet_covs <- 1

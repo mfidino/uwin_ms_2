@@ -21,6 +21,7 @@ my_res <- list.files("./results/", pattern = "csv", full.names = TRUE)
 my_res <- my_res[-4]
 
 
+
 cdat <- read.csv("data/city_level_data.csv", stringsAsFactors = FALSE)
 cdat <- cdat[order(cdat$city),]
 
