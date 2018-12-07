@@ -116,24 +116,7 @@ scale_cdat <- cdat %>% mutate_if(is.numeric, scale)
 to_keep_city <- c("habitat", "pop10_dens", "latitude")
 U[,-1] <- scale_cdat[,to_keep_city] %>% as.matrix
 
-# do raccoon analysis
-data_list <- list(
-  y = det_data$raccoon,
-  has_species = has_species$raccoon,
-  J = det_data$J,
-  ncity = ncity,
-  nsite = nsite,
-  npatch_covs = npatch_covs,
-  ncity_covs = ncity_covs,
-  ndet_covs = ndet_covs,
-  bx = bx,
-  dx = dx,
-  U = U,
-  city_vec = city_vec
-)
 
-z <- data_list$y
-z[z>1] <- 1
 
 
 
@@ -143,14 +126,38 @@ to_monitor <- c("B", "G", "D",
               "sigma.int", "sigma.urb", "z")
 my_model <- "./jags_scripts/mvn_occupancy_3preds.R"
 nchain <- 6
-nadapt <- 2e6
+nadapt <- 3e6
 nburnin <- 2e6
 nsample <- 83333
 nthin <- 2
 my_method <- "parallel"
 
+# get the names of the species we are fitting
+my_species <- colnames(has_species)
 
-raccoon <- run.jags(
+# Fit model to the data
+for(species in 1:nspecies) {
+  
+  data_list <- list(
+    y = det_data[,my_species[species]],
+    has_species = has_species[,my_species[species]],
+    J = det_data$J,
+    ncity = ncity,
+    nsite = nsite,
+    npatch_covs = npatch_covs,
+    ncity_covs = ncity_covs,
+    ndet_covs = ndet_covs,
+    bx = bx,
+    dx = dx,
+    U = U,
+    city_vec = city_vec
+  )
+  
+  z <- data_list$y
+  z[z>1] <- 1
+  
+
+model_output <- run.jags(
   model = my_model,
   data = data_list,
   n.chains = nchain,
@@ -159,237 +166,7 @@ raccoon <- run.jags(
   burnin = nburnin,  sample = nsample, thin = nthin, method = my_method,
   inits = inits, summarise = FALSE, modules = "glm")
 
-saveRDS(raccoon, "./results/raccoon.RDS")
-rm(raccoon)
+saveRDS(model_output, paste0("./results/", my_species[species], ".RDS"))
+rm(model_output)
 
-# do rabbit
-data_list <- list(
-  y = det_data$rabbit,
-  has_species = has_species$rabbit,
-  J = det_data$J,
-  ncity = ncity,
-  nsite = nsite,
-  npatch_covs = npatch_covs,
-  ncity_covs = ncity_covs,
-  ndet_covs = ndet_covs,
-  bx = bx,
-  dx = dx,
-  U = U,
-  city_vec = city_vec
-)
-
-z <- data_list$y
-z[z>1] <- 1
-
-
-rabbit <- run.jags(
-  model = my_model,
-  data = data_list,
-  n.chains = nchain,
-  monitor = to_monitor,
-  adapt = nadapt,
-  burnin = nburnin,  sample = nsample, thin = nthin, method = my_method,
-  inits = inits, summarise = FALSE, modules = "glm")
-
-saveRDS(rabbit, "./results/rabbit.RDS")
-rm(rabbit)
-
-# do coyote
-data_list <- list(
- y = det_data$coyote,
- has_species = has_species$coyote,
- J = det_data$J,
- ncity = ncity,
- nsite = nsite,
- npatch_covs = npatch_covs,
- ncity_covs = ncity_covs,
- ndet_covs = ndet_covs,
- bx = bx,
- dx = dx,
- U = U,
- city_vec = city_vec
-)
-
-
-z <- data_list$y
-z[z>1] <- 1
-
-coyote <- run.jags(
-  model = my_model,
-  data = data_list,
-  n.chains = nchain,
-  monitor = to_monitor,
-  adapt = nadapt,
-  burnin = nburnin,  sample = nsample, thin = nthin, method = my_method,
-  inits = inits, summarise = FALSE, modules = "glm")
-
-saveRDS(coyote, "./results/coyote.RDS")
-rm(coyote)
-
- #do opossum
- data_list <- list(
-   y = y$opossum,
-   has_species = has_species$opossum,
-   J = y$J,
-   ncity = ncity,
-   nsite = nrow(y),
-   npatch_covs = npatch_covs,
-   ncity_covs = ncity_covs,
-   ndet_covs = ndet_covs,
-   bx = bx,
-   dx = dx,
-   U = U,
-   city_vec = city_vec
- )
- 
- 
- z <- data_list$y
- z[z>1] <- 1
-
- 
- opossum <- run.jags(
-   model = my_model,
-   data = data_list,
-   n.chains = nchain,
-   monitor = to_monitor,
-   adapt = nadapt,
-   burnin = nburnin,  sample = nsample, thin = nthin, method = my_method,
-   inits = inits, summarise = FALSE, modules = "glm")
- 
- saveRDS(opossum, "./results/opossum.RDS")
- rm(opossum)
-
-# do skunk
-data_list <- list(
-  y = det_data$skunk,
-  has_species = has_species$skunk,
-  J = det_data$J,
-  ncity = ncity,
-  nsite = nsite,
-  npatch_covs = npatch_covs,
-  ncity_covs = ncity_covs,
-  ndet_covs = ndet_covs,
-  bx = bx,
-  dx = dx,
-  U = U,
-  city_vec = city_vec
-)
-
-
-z <- data_list$y
-z[z>1] <- 1
-
-skunk <- run.jags(
-  model = my_model,
-  data = data_list,
-  n.chains = nchain,
-  monitor = to_monitor,
-  adapt = nadapt,
-  burnin = nburnin,  sample = nsample, thin = nthin, method = my_method,
-  inits = inits, summarise = FALSE, modules = "glm")
-
-saveRDS(skunk, "./results/skunk.RDS")
-rm(skunk)
-
-
-# do redfox
-data_list <- list(
-  y = det_data$redfox,
-  has_species = has_species$redfox,
-  J = det_data$J,
-  ncity = ncity,
-  nsite = nsite,
-  npatch_covs = npatch_covs,
-  ncity_covs = ncity_covs,
-  ndet_covs = ndet_covs,
-  bx = bx,
-  dx = dx,
-  U = U,
-  city_vec = city_vec
-)
-
-
-z <- data_list$y
-z[z>1] <- 1
-
-
-fox <- run.jags(
-  model = my_model,
-  data = data_list,
-  n.chains = nchain,
-  monitor = to_monitor,
-  adapt = nadapt,
-  burnin = nburnin,  sample = nsample, thin = nthin, method = my_method,
-  inits = inits, summarise = FALSE, modules = "glm")
-
-saveRDS(fox, "./results/fox.RDS")
-rm(fox)
-
-# do g squ
-data_list <- list(
-  y = det_data$graysquirrel,
-  has_species = has_species$graysquirrel,
-  J = det_data$J,
-  ncity = ncity,
-  nsite = nsite,
-  npatch_covs = npatch_covs,
-  ncity_covs = ncity_covs,
-  ndet_covs = ndet_covs,
-  bx = bx,
-  dx = dx,
-  U = U,
-  city_vec = city_vec
-)
-
-
-z <- data_list$y
-z[z>1] <- 1
-
-
-
-g_squ <- run.jags(
-  model = my_model,
-  data = data_list,
-  n.chains = nchain,
-  monitor = to_monitor,
-  adapt = nadapt,
-  burnin = nburnin,  sample = nsample, thin = nthin, method = my_method,
-  inits = inits, summarise = FALSE, modules = "glm")
-
-
-saveRDS(g_squ, "./results/g_squ.RDS")
-rm(g_squ)
-
-# do f squ
-
-data_list <- list(
-  y = det_data$foxsquirrel,
-  has_species = has_species$foxsquirrel,
-  J = det_data$J,
-  ncity = ncity,
-  nsite = nrow(det_data),
-  npatch_covs = npatch_covs,
-  ncity_covs = ncity_covs,
-  ndet_covs = ndet_covs,
-  bx = bx,
-  dx = dx,
-  U = U,
-  city_vec = city_vec)
-
-
-
-z <- data_list$y
-z[z>1] <- 1
-
-
-f_squ <- run.jags(
-  model = my_model,
-  data = data_list,
-  n.chains = nchain,
-  monitor = to_monitor,
-  adapt = nadapt,
-  burnin = nburnin,  sample = nsample, thin = nthin, method = my_method,
-  inits = inits, summarise = FALSE, modules = "glm")
-
-saveRDS(f_squ, "./results/f_squ.RDS")
-rm(f_squ)
+}

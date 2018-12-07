@@ -20,7 +20,7 @@ for(city in 1:ncity){
 }
 for(patch_covs in 1:npatch_covs){
   for(city_covs in 1:ncity_covs){
-    G[patch_covs, city_covs]  ~ dlogis(0, 1)
+    G[patch_covs, city_covs]  ~ dt(0, 2.5, 1)
   }
 }
 # this is the inverse of the variance covariance matrix
@@ -47,7 +47,7 @@ for(city in 1:ncity){
   }
 }
 for(det_covs in 1:ndet_covs){
-  rho_mu[det_covs] ~ dlogis(0, 1)
+  rho_mu[det_covs] ~ dt(0, 2.5, 1)
   rho_tau[det_covs] ~ dgamma(1, 1)
   rho_sigma[det_covs] <- 1 / sqrt(rho_tau[det_covs])
 }
