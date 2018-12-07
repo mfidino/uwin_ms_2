@@ -37,3 +37,40 @@ HDIofMCMC = function( sampleVec , credMass=0.95 ) {
   HDIlim = c( HDImin ,median(sampleVec), HDImax )
   return( HDIlim )
 }
+
+
+inits <- function(chain){
+  gen_list <- function(chain = chain){
+    list( 
+      z = z,
+      B = array(rnorm(ncity * npatch_covs), 
+                dim = c(ncity, npatch_covs)),
+      G = array(rnorm(ncity_covs * npatch_covs), 
+                dim = c(npatch_covs, ncity_covs)),
+      sigma.int = rgamma(1, 1, 1),
+      sigma.urb = rgamma(1, 1, 1),
+      rho_cor = runif(1, -1, 1),
+      .RNG.name = switch(chain,
+                         "1" = "base::Wichmann-Hill",
+                         "2" = "base::Marsaglia-Multicarry",
+                         "3" = "base::Super-Duper",
+                         "4" = "base::Mersenne-Twister",
+                         "5" = "base::Wichmann-Hill",
+                         "6" = "base::Marsaglia-Multicarry",
+                         "7" = "base::Super-Duper",
+                         "8" = "base::Mersenne-Twister"),
+      .RNG.seed = sample(1:1e+06, 1)
+    )
+  }
+  return(switch(chain,           
+                "1" = gen_list(chain),
+                "2" = gen_list(chain),
+                "3" = gen_list(chain),
+                "4" = gen_list(chain),
+                "5" = gen_list(chain),
+                "6" = gen_list(chain),
+                "7" = gen_list(chain),
+                "8" = gen_list(chain)
+  )
+  )
+}
