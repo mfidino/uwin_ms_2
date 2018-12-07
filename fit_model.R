@@ -43,8 +43,6 @@ patch_cov_path <- list.files(path = "./data/",
 patch_covs <- lapply(patch_cov_path, read.csv, header= TRUE, stringsAsFactors = FALSE)
 patch_covs <- bind_rows(patch_covs)
 
-#### continue from here ###########
-
 # read in all the sites as we need the locationID
 all_sites <- read.csv("./data/uwin_all_sites.csv", stringsAsFactors = FALSE)[,-2]
 

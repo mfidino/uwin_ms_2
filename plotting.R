@@ -17,7 +17,7 @@ plot(rac_res[,3] ~ rac_res[,10])
 data.table::fread("./results/raccoon_matrix.csv",
                   data.table = FALSE) %>%
   as.matrix(.) %>% 
- gen_preds.popdens(., occ_data = dat, 
+ gen_preds.popdens(., occ_data = det_data, 
                     city_covs = scale_cdat$pop10_dens,
                    species = "raccoon") %>% 
   make_plot.popdens(., species = "raccoon")
@@ -26,16 +26,27 @@ data.table::fread("./results/raccoon_matrix.csv",
 data.table::fread("./results/raccoon_matrix.csv",
                                    data.table = FALSE) %>% 
   as.matrix(.) %>% 
-  gen_preds.habitat(., occ_data = dat, 
+  gen_preds.habitat(., occ_data = det_data, 
                     city_covs = scale_cdat$habitat,
                     species = "raccoon") %>% 
 make_plot.habitat(., species = "raccoon")
+
+# Raccoon intercept latitude
+data.table::fread("./results/raccoon_matrix.csv",
+                  data.table = FALSE) %>% 
+  as.matrix(.) %>% 
+  gen_preds.latitude(., occ_data = det_data, 
+                    city_covs = scale_cdat$latitude,
+                    species = "raccoon") %>% 
+  make_plot.latitude(., species = "raccoon")
+
+# Raccoon intercept latitude
 
 # Raccoon slope popdens
 data.table::fread("./results/raccoon_matrix.csv",
                   data.table = FALSE) %>% 
   as.matrix(.) %>% 
-  gen_preds.popdens(., occ_data = dat, 
+  gen_preds.popdens(., occ_data = det_data, 
                     city_covs = scale_cdat$pop10_dens,
                     species = "raccoon", intercept = FALSE) %>% 
 make_plot.popdens(., species = "raccoon", intercept = FALSE)
@@ -44,10 +55,19 @@ make_plot.popdens(., species = "raccoon", intercept = FALSE)
 data.table::fread("./results/raccoon_matrix.csv",
                   data.table = FALSE) %>% 
   as.matrix(.) %>% 
-  gen_preds.habitat(., occ_data = dat, 
+  gen_preds.habitat(., occ_data = det_data, 
                     city_covs = scale_cdat$habitat,
                     species = "raccoon", intercept = FALSE) %>% 
 make_plot.habitat(., species = "raccoon", intercept = FALSE)
+
+# Racoon slope latitude
+data.table::fread("./results/raccoon_matrix.csv",
+                  data.table = FALSE) %>% 
+  as.matrix(.) %>% 
+  gen_preds.latitude(., occ_data = det_data, 
+                    city_covs = scale_cdat$latitude,
+                    species = "raccoon", intercept = FALSE) %>% 
+  make_plot.latitude(., species = "raccoon", intercept = FALSE)
 
 #########
 # COYOTE

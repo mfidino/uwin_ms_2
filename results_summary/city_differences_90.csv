@@ -1,0 +1,3 @@
+"Species","City_pars","Intercept","Habitat amount","Population density","Latitude"
+"raccoon","City intercept","1.13 (0.37 - 1.88)","-0.15 (-1.26 - 0.97)","-0.23 (-1.23 - 0.79)","-0.07 (-1.28 - 1.13)"
+"raccoon","URB slope","-0.17 (-0.49 - 0.17)","0.43 (-0.14 - 1.02)","-0.06 (-0.59 - 0.49)","0.42 (-0.22 - 1.08)"
