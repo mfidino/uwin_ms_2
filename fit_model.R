@@ -82,8 +82,6 @@ city_vec <- as.numeric(factor(det_data$city))
 
 
 # make the urbanization covariate
-
-
 urb500 <- prcomp(patch_covs[,c(7,10)], scale. = TRUE)
 urb1000 <- prcomp(patch_covs[,c(8,11)], scale. = TRUE)
 urb4000 <- prcomp(patch_covs[,c(9,12)], scale. = TRUE)
@@ -115,10 +113,6 @@ scale_cdat <- cdat %>% mutate_if(is.numeric, scale)
 # get only the covars we want
 to_keep_city <- c("habitat", "pop10_dens", "latitude")
 U[,-1] <- scale_cdat[,to_keep_city] %>% as.matrix
-
-
-
-
 
 # Settings for the jags models
 to_monitor <- c("B", "G", "D",
