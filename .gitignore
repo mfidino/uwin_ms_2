@@ -39,3 +39,4 @@ rsconnect/
 # remove results from GH page
 *.RDS
 *matrix.csv
+*.tiff

@@ -78,15 +78,15 @@ for(species in 1:length(my_res)){
 }
 
 g_res <- vector("list", length = length(my_res))
-for(i in 1:8 ){
-  g_res[[i]] <- fread(my_res[i], data.table = FALSE) 
+for(species in 1:8 ){
+  g_res[[species]] <- fread(my_res[species], data.table = FALSE) 
   
 
 }
 
 sp_name <- gsub("\\./results/", "", my_res) %>% gsub("\\.RDS", "", .)
 # re-write and save them via fwrite
-for(i in 1:7){
+for(i in 1:8){
   data.table::fwrite(data.table::data.table(g_res[[i]]), 
                      paste0("./results/", sp_name[i], "_matrix.csv"))
 }
@@ -95,7 +95,7 @@ g_res
 # get_mu
 my_mu <- matrix(0, ncol = 8, nrow = nrow(g_res[[1]]))
 
-for(i in 1:9){
+for(i in 1:8){
   my_mu[,i] <- g_res[[i]][,grep("G\\[1,1", colnames(g_res[[i]]))]
 }
 
@@ -104,29 +104,30 @@ mumed <- apply(my_mu, 2, median)
 
 sp_or <- base::order(mumed, decreasing = TRUE)
 
-sp_name_or <- sp_name[sp_or]
+sp_name_or <- my_rds_short[sp_or]
 
 my_mu <- my_mu[,sp_or]
 
 sp_name_or
-fancy_names <- c("Raccoon\n", "Virginia\nopossum", "Fox\nsquirrel", "Eastern\ncottontail",
-                 "Coyote\n", "Red fox\n", "Striped\nskunk")
+fancy_names <- c("Raccoon\n", "Fox\nsquirrel", "Virginia\nopossum" , "Eastern\ncottontail",
+                 "Coyote\n", "Gray\nsquirrel", "Striped\nskunk","Red fox\n" )
 
 windows(6,6)
 tiff("./plots/avg_occupancy.tiff", height = 6, width = 6, units = "in",
      res = 400, compression = "lzw")
 par(mar = c(3,4,0.5,0.5))
 plot(1~1, type ="n", bty = 'l', xlab = "", ylab = "", xaxt = "n",
-     yaxt = "n", ylim = c(0,1), xlim = c(0.5,7.5))
-axis(1, at = seq(1, 8), tck = -0.025/2, labels = FALSE)
-mtext(text = fancy_names, side = 1, at = seq(1, 7), line = 1.5, cex = 1)
+     yaxt = "n", ylim = c(0,1), xlim = c(0.5,8.5))
+axis(1, at = seq(1, 9), tck = -0.025/2, labels = FALSE)
+mtext(text = fancy_names, side = 1, at = seq(1, 8), line = 1.5, cex = 0.75)
 axis(2, at = seq(0,1, 0.25), labels = F, tck = -0.025)
 axis(2, at = seq(0,1, 0.125), labels = F, tck = -0.025/2)
 mtext(text = sprintf("%.2f",seq(0,1,0.25)), 2, 
       line = 0.8, at = seq(0,1,0.25),las = 1)
 mtext(text = "Average occupancy rate", 2, at = 0.5, line = 2.8, cex = 1.3)
-my_col <- c('#9c5be8','#ae74ec','#be8ef0','#cea7f4','#ddbff7','#ebd8fb','#f9f2fe')
-for(i in 1:7){
+my_col <- c('#9c5be8','#ae74ec','#be8ef0','#cea7f4','#ddbff7','#ebd8fb','#f9f2fe',
+            '#f9f2fe')
+for(i in 1:8){
   to_plot <- my_mu[,i]
   my_hdi <- HDIofMCMC(to_plot)
   to_plot <- to_plot[between(to_plot, my_hdi[1], my_hdi[3])]

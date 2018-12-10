@@ -1,335 +1,81 @@
 
-rac_res <- as.matrix(as.mcmc.list(raccoon), chains = TRUE)
-r1 <- as.mcmc.list(raccoon)
-diagMCMC(r1,"rho_mat")
+which_folder <- "full_model"
 
-t1 <- apply(rac_res, 2, HDIofMCMC)
+my_files <- list.files(paste0("./results/", which_folder),
+                       pattern = "matrix", 
+                       full.names = TRUE)
 
-plot(rac_res[,3] ~ rac_res[,10])
+sp_name <- gsub(".*/(\\w+)_matrix.csv", "\\1", my_files)
 
+# check if a sub-folder exists
+f_exist <- dir.exists(paste0("./plots/", sp_name))
+for(ex in 1:length(f_exist)){
+  if(!f_exist[ex]){
+    dir.create(paste0("./plots/", sp_name[ex]))
+  }
+}
 
-
-##########
-# RACCOON
-##########
-
-# Raccoon intercept population density
-data.table::fread("./results/raccoon_matrix.csv",
-                  data.table = FALSE) %>%
-  as.matrix(.) %>% 
- gen_preds.popdens(., occ_data = det_data, 
-                    city_covs = scale_cdat$pop10_dens,
-                   species = "raccoon") %>% 
-  make_plot.popdens(., species = "raccoon")
+for(species in 1:length(sp_name)){
+  # read in the mcmc matrix
+  results_matrix <- data.table::fread(my_files[species],
+                                      data.table = FALSE) %>% 
+                    as.matrix(.)
   
-# Raccoon intercept habitat
-data.table::fread("./results/raccoon_matrix.csv",
-                                   data.table = FALSE) %>% 
-  as.matrix(.) %>% 
-  gen_preds.habitat(., occ_data = det_data, 
-                    city_covs = scale_cdat$habitat,
-                    species = "raccoon") %>% 
-make_plot.habitat(., species = "raccoon")
-
-# Raccoon intercept latitude
-data.table::fread("./results/raccoon_matrix.csv",
-                  data.table = FALSE) %>% 
-  as.matrix(.) %>% 
-  gen_preds.latitude(., occ_data = det_data, 
-                    city_covs = scale_cdat$latitude,
-                    species = "raccoon") %>% 
-  make_plot.latitude(., species = "raccoon")
-
-# Raccoon intercept latitude
-
-# Raccoon slope popdens
-data.table::fread("./results/raccoon_matrix.csv",
-                  data.table = FALSE) %>% 
-  as.matrix(.) %>% 
-  gen_preds.popdens(., occ_data = det_data, 
-                    city_covs = scale_cdat$pop10_dens,
-                    species = "raccoon", intercept = FALSE) %>% 
-make_plot.popdens(., species = "raccoon", intercept = FALSE)
-
-# Racoon slope habitat
-data.table::fread("./results/raccoon_matrix.csv",
-                  data.table = FALSE) %>% 
-  as.matrix(.) %>% 
-  gen_preds.habitat(., occ_data = det_data, 
-                    city_covs = scale_cdat$habitat,
-                    species = "raccoon", intercept = FALSE) %>% 
-make_plot.habitat(., species = "raccoon", intercept = FALSE)
-
-# Racoon slope latitude
-data.table::fread("./results/raccoon_matrix.csv",
-                  data.table = FALSE) %>% 
-  as.matrix(.) %>% 
-  gen_preds.latitude(., occ_data = det_data, 
-                    city_covs = scale_cdat$latitude,
-                    species = "raccoon", intercept = FALSE) %>% 
-  make_plot.latitude(., species = "raccoon", intercept = FALSE)
-
-#########
-# COYOTE
-#########
-  
-# Coyote intercept popdens
-data.table::fread("./results/coyote_matrix.csv",
-                  data.table = FALSE) %>% 
-  as.matrix(.) %>% 
-    gen_preds.popdens(., occ_data = dat, 
+  # psi_mu(population density)
+  results_matrix %>% 
+    gen_preds.popdens(., occ_data = det_data, 
                       city_covs = scale_cdat$pop10_dens,
-                      species = "coyote") %>% 
-  make_plot.popdens(., species = "coyote")
+                      species = sp_name[species]) %>% 
+    make_plot.popdens(., species = sp_name[species])
   
-# Coyote intercept habitat
-data.table::fread("./results/coyote_matrix.csv",
-                  data.table = FALSE) %>% 
-  as.matrix(.) %>% 
-    gen_preds.habitat(., occ_data = dat, 
+  # psi_mu(proportion habitat)
+  results_matrix %>% 
+    gen_preds.habitat(., occ_data = det_data, 
                       city_covs = scale_cdat$habitat,
-                      species = "coyote") %>% 
-  make_plot.habitat(., species = "coyote")
+                      species = sp_name[species]) %>% 
+    make_plot.habitat(., species = sp_name[species])
+    
+  # psi_mu(latitude)
+  results_matrix %>% 
+    gen_preds.latitude(., occ_data = det_data, 
+                       city_covs = scale_cdat$latitude,
+                       species = sp_name[species]) %>% 
+    make_plot.latitude(., species = sp_name[species])
   
-# Coyote slope popdens
-data.table::fread("./results/coyote_matrix.csv",
-                  data.table = FALSE) %>% 
-  as.matrix(.) %>% 
-  gen_preds.popdens(., occ_data = dat, 
-                    city_covs = scale_cdat$pop10_dens,
-                    species = "coyote", intercept = FALSE) %>% 
-make_plot.popdens(., species = "coyote", intercept = FALSE)
-
-# Coyote slope habitat
-data.table::fread("./results/coyote_matrix.csv",
-                  data.table = FALSE) %>% 
-  as.matrix(.) %>% 
-  gen_preds.habitat(., occ_data = dat, 
-                    city_covs = scale_cdat$habitat,
-                    species = "coyote", intercept = FALSE) %>% 
-make_plot.habitat(., species = "coyote", intercept = FALSE)
-
-#######
-# SKUNK
-#######
-
-# skunk intercept popdens
-data.table::fread("./results/skunk_matrix.csv",
-                  data.table = FALSE) %>% 
-  as.matrix(.) %>% 
-    gen_preds.popdens(., occ_data = dat, 
+  # psi_mu(intercept)
+results_matrix %>%
+    gen_preds.nocorrelates(., occ_data = det_data,
+                           species = sp_name[species] ) %>% 
+  make_plot.nocorrelates(., species = sp_name[species],
+                         city_names = cdat$city)
+    
+  # response to urbanization(population density)
+  results_matrix %>% 
+    gen_preds.popdens(., occ_data = det_data, 
                       city_covs = scale_cdat$pop10_dens,
-                      species = "skunk") %>% 
-  make_plot.popdens(., species = "skunk")
-
-# skunk intercept habitat
-data.table::fread("./results/skunk_matrix.csv",
-                  data.table = FALSE) %>% 
-  as.matrix(.) %>% 
-    gen_preds.habitat(., occ_data = dat, 
+                      species = sp_name[species], intercept = FALSE) %>% 
+    make_plot.popdens(., species = sp_name[species], intercept = FALSE)
+  
+  results_matrix %>% 
+    gen_preds.habitat(., occ_data = det_data, 
                       city_covs = scale_cdat$habitat,
-                      species = "skunk") %>% 
-  make_plot.habitat(., species = "skunk")
+                      species = sp_name[species], intercept = FALSE) %>% 
+    make_plot.habitat(., species = sp_name[species], intercept = FALSE)
+  
+  results_matrix %>% 
+    gen_preds.latitude(., occ_data = det_data, 
+                       city_covs = scale_cdat$latitude,
+                       species = sp_name[species], intercept = FALSE) %>% 
+    make_plot.latitude(., species = sp_name[species], intercept = FALSE)
+  
+  results_matrix %>%
+    gen_preds.nocorrelates(., occ_data = det_data,
+                           species = sp_name[species], intercept = FALSE ) %>% 
+    make_plot.nocorrelates(., species = sp_name[species], intercept = FALSE,
+                           city_names = cdat$city)
+  
+}
 
-# skunk slope popdens
-data.table::fread("./results/skunk_matrix.csv",
-                  data.table = FALSE) %>% 
-  as.matrix(.) %>% 
-  gen_preds.popdens(., occ_data = dat, 
-                    city_covs = scale_cdat$pop10_dens,
-                    species = "skunk", intercept = FALSE) %>% 
-make_plot.popdens(., species = "skunk", intercept = FALSE)
-
-# Skunk slope habitat
-data.table::fread("./results/skunk_matrix.csv",
-                  data.table = FALSE) %>% 
-  as.matrix(.) %>% 
-  gen_preds.habitat(., occ_data = dat, 
-                    city_covs = scale_cdat$habitat,
-                    species = "skunk", intercept = FALSE) %>% 
-make_plot.habitat(., species = "skunk", intercept = FALSE)
-  
-#########
-# Red fox
-#########
-
-# fox intercept popdens
-data.table::fread("./results/fox_matrix.csv",
-                  data.table = FALSE) %>% 
-  as.matrix(.) %>% 
-    gen_preds.popdens(., occ_data = dat, 
-                      city_covs = scale_cdat$pop10_dens,
-                      species = "redfox") %>% 
-  make_plot.popdens(., species = "redfox")
-
-# fox intercept habitat
-  data.table::fread("./results/fox_matrix.csv",
-                    data.table = FALSE) %>% 
-    as.matrix(.) %>% 
-    gen_preds.habitat(., occ_data = dat, 
-                      city_covs = scale_cdat$habitat,
-                      species = "redfox") %>% 
-  make_plot.habitat(., species = "redfox")
-
-# fox slope popdens
-  data.table::fread("./results/fox_matrix.csv",
-                    data.table = FALSE) %>% 
-    as.matrix(.) %>% 
-  gen_preds.popdens(., occ_data = dat, 
-                    city_covs = scale_cdat$pop10_dens,
-                    species = "redfox", intercept = FALSE) %>% 
-make_plot.popdens(., species = "redfox", intercept = FALSE)
-
-# fox slope habitat
-data.table::fread("./results/fox_matrix.csv",
-                  data.table = FALSE) %>% 
-  as.matrix(.) %>% 
-  gen_preds.habitat(., occ_data = dat, 
-                    city_covs = scale_cdat$habitat,
-                    species = "redfox", intercept = FALSE) %>% 
-make_plot.habitat(., species = "redfox", intercept = FALSE)
-
-####################
-# eastern cottontail
-####################
-
-# rabbit intercept popdens
-data.table::fread("./results/rabbit_matrix.csv",
-                  data.table = FALSE) %>% 
-  as.matrix(.) %>% 
-    gen_preds.popdens(., occ_data = dat, 
-                      city_covs = scale_cdat$pop10_dens,
-                      species = "rabbit") %>% 
-  make_plot.popdens(., species = "rabbit")
-  
-# rabbit intercept habitat
-data.table::fread("./results/rabbit_matrix.csv",
-                  data.table = FALSE) %>% 
-  as.matrix(.) %>% 
-    gen_preds.habitat(., occ_data = dat, 
-                      city_covs = scale_cdat$habitat,
-                      species = "rabbit") %>% 
-  make_plot.habitat(., species = "rabbit")
-  
-# rabbit slope popdens
-data.table::fread("./results/rabbit_matrix.csv",
-                  data.table = FALSE) %>% 
-  as.matrix(.) %>% 
-  gen_preds.popdens(., occ_data = dat, 
-                    city_covs = scale_cdat$pop10_dens,
-                    species = "rabbit", intercept = FALSE) %>% 
-make_plot.popdens(., species = "rabbit", intercept = FALSE)
-
-# rabbit slope habitat
-data.table::fread("./results/rabbit_matrix.csv",
-                  data.table = FALSE) %>% 
-  as.matrix(.) %>% 
-  gen_preds.habitat(., occ_data = dat, 
-                    city_covs = scale_cdat$habitat,
-                    species = "rabbit", intercept = FALSE) %>% 
-make_plot.habitat(., species = "rabbit", intercept = FALSE)
-  
-#########
-# opossum
-#########
-
-# opossum intercept popdens
-aa <- scale_cdat$pop10_dens[-c(3,4)]
-attributes(aa) <- list(dim = c(6,1), 
-                        `scaled:center` = as.numeric(attributes(scale_cdat$pop10_dens)[2]),
-                        `scaled:scale`=   as.numeric(attributes(scale_cdat$pop10_dens)[3]))
- 
-data.table::fread("./results/opossum_5city_matrix.csv",
-                  data.table = FALSE) %>% 
-  as.matrix(.) %>% 
-    gen_preds.popdens(., occ_data = dat[-grep("foco|deco", dat$city),], 
-                      city_covs = aa,
-                      species = "opossum") %>% 
-  make_plot.popdens(., species = "opossum5")
-  
-# opossum intercept habitat
-  bb <- scale_cdat$habitat[-c(3:4)]
-  attributes(bb) <- list(dim = c(6,1), 
-                         `scaled:center` = as.numeric(attributes(scale_cdat$habitat)[2]),
-                         `scaled:scale`=   as.numeric(attributes(scale_cdat$habitat)[3]))
-  data.table::fread("./results/opossum_5city_matrix.csv",
-                    data.table = FALSE) %>% 
-    as.matrix(.) %>% 
-    gen_preds.habitat(., occ_data = dat[-grep("foco|deco", dat$city),], 
-                      city_covs = bb,
-                      species = "opossum") %>% 
-  make_plot.habitat(., species = "opossum5")
-  
-  # opossum slope popdens
-  data.table::fread("./results/opossum_5city_matrix.csv",
-                    data.table = FALSE) %>% 
-    as.matrix(.) %>% 
-    gen_preds.popdens(., occ_data = dat[-grep("foco|deco", dat$city),], 
-                      city_covs = aa,
-                      species = "opossum", intercept = FALSE) %>% 
-  make_plot.popdens(., species = "opossum5", intercept = FALSE)
-  
-  # opossum slope habitat
-  data.table::fread("./results/opossum_5city_matrix.csv",
-                    data.table = FALSE) %>% 
-    as.matrix(.) %>% 
-    gen_preds.habitat(., occ_data = dat[-grep("foco|deco", dat$city),], 
-                      city_covs = bb,
-                      species = "opossum", intercept = FALSE) %>% 
-  make_plot.habitat(., species = "opossum5", intercept = FALSE)
-  
-  ##############
-  # fox squirrel
-  ##############
-  aa <- scale_cdat$pop10_dens[-c(8)]
-  attributes(aa) <- list(dim = c(7,1), 
-                         `scaled:center` = as.numeric(attributes(scale_cdat$pop10_dens)[2]),
-                         `scaled:scale`=   as.numeric(attributes(scale_cdat$pop10_dens)[3]))
-  
-  # fox squirrel intercept popdens
-  data.table::fread("./results/f_squ_matrix.csv",
-                    data.table = FALSE) %>% 
-    as.matrix(.) %>% 
-    gen_preds.popdens(., occ_data = dat, 
-                      city_covs = aa,
-                      species = "foxsquirrel") %>% 
-  make_plot.popdens(., species = "foxsquirrel")
-  
-  # fox squirrel intercept habitat
-  
-  bb <- scale_cdat$habitat[-8]
-  attributes(bb) <- list(dim = c(7,1), 
-                         `scaled:center` = as.numeric(attributes(scale_cdat$habitat)[2]),
-                         `scaled:scale`=   as.numeric(attributes(scale_cdat$habitat)[3]))
-  
-  data.table::fread("./results/f_squ_matrix.csv",
-                    data.table = FALSE) %>% 
-    as.matrix(.) %>% 
-    gen_preds.habitat(., occ_data = dat, 
-                      city_covs = bb,
-                      species = "foxsquirrel") %>% 
-  make_plot.habitat(., species = "foxsquirrel")
-  
-  # fox squirrel slope popdens
-  data.table::fread("./results/f_squ_matrix.csv",
-                    data.table = FALSE) %>% 
-    as.matrix(.) %>% 
-    gen_preds.popdens(., occ_data = dat, 
-                      city_covs = aa,
-                      species = "foxsquirrel", intercept = FALSE) %>% 
-  make_plot.popdens(., species = "foxsquirrel", intercept = FALSE)
-  
-  # fox squirrel slope habitat
-  data.table::fread("./results/f_squ_matrix.csv",
-                    data.table = FALSE) %>% 
-    as.matrix(.) %>% 
-    gen_preds.habitat(., occ_data = dat, 
-                      city_covs = bb,
-                      species = "foxsquirrel", intercept = FALSE) %>% 
-  make_plot.habitat(., species = "foxsquirrel", intercept = FALSE)
-  
-  
-  
   
   
   m1 <- data.table::fread("./results/raccoon_matrix.csv",
