@@ -38,4 +38,4 @@ rsconnect/
 
 # remove results from GH page
 *.RDS
-*results.csv
+*matrix.csv
