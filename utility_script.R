@@ -74,3 +74,46 @@ inits <- function(chain){
   )
   )
 }
+
+
+calc_waic <- function(posterior = NULL, 
+                      data = NULL ){
+  cat("Calculating WAIC\n")
+  with(data,{
+    chains <- length(posterior$mcmc)
+    store <- dim(posterior$mcmc[[1]])[1]
+    Nobs <- length(y)
+    L <- array(dim=c(Nobs, chains, store))
+    L_bar <- rep(NA, Nobs)
+    var_LL <- rep(NA, Nobs)
+    pb <- txtProgressBar(min = 0, max = Nobs, style = 3)
+    for (i in 1:Nobs){
+      for (j in 1:chains){
+        post_sims <- posterior$mcmc[[j]]
+        indx_z <- which(dimnames(post_sims)[[2]] == 
+                          paste0("z[", i, "]"))
+        zvals <- post_sims[, indx_z]
+        which_city <- city_vec[i]
+        
+        indx_p <- which(dimnames(post_sims)[[2]] == 
+                          paste0("D[", city_vec[i],",1", "]"))
+        pvals <- plogis(post_sims[, indx_p])
+        L[i, j, ] <- dbinom(rep(y[i], store), 
+                            size=J[i], 
+                            prob = zvals * pvals, 
+                            log=TRUE)
+        if(is.na(has_species[i])){
+          L[i, j, ] <- NA
+        }
+        setTxtProgressBar(pb, i)
+      }
+      L_bar[i] <- mean(exp(c(L[i, , ])), na.rm = TRUE)
+      var_LL[i] <- var(c(L[i, , ]), na.rm = TRUE)
+    }
+    
+    lppd <- sum(log(L_bar), na.rm = TRUE)
+    p_WAIC <- sum(var_LL, na.rm = TRUE)
+    WAIC <- -2 * (lppd - p_WAIC)
+    return(list(lppd=lppd, p_WAIC=p_WAIC, WAIC=WAIC, L_bar))
+  })
+}

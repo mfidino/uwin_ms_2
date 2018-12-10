@@ -129,8 +129,10 @@ my_method <- "parallel"
 # get the names of the species we are fitting
 my_species <- colnames(has_species)
 
-# Fit model to the data
+# Fit global model
+model <- "global"
 for(species in 1:nspecies) {
+  print(species)
   
   data_list <- list(
     y = det_data[,my_species[species]],
@@ -149,6 +151,23 @@ for(species in 1:nspecies) {
   
   z <- data_list$y
   z[z>1] <- 1
+  if(sum(det_events[,2 + species]) == ncity){
+    print("model already exists")
+    model_output <- readRDS(paste0("./results/global/",my_species[species],
+                                   ".RDS"))
+    model_waic <- calc_waic(model_output, data_list)
+    saveRDS(model_waic, paste0("./results/",model,"/", my_species[species], "_waic.RDS"))
+    rm(model_output)
+    rm(model_waic)
+    next
+  }
+  
+  # make y NA if species is not present in a given city
+  if(any(data_list$has_species == 0)){
+  data_list$y[which(data_list$has_species == 0)] <- NA
+  }
+  
+  
   
 
 model_output <- run.jags(
@@ -160,7 +179,10 @@ model_output <- run.jags(
   burnin = nburnin,  sample = nsample, thin = nthin, method = my_method,
   inits = inits, summarise = FALSE, modules = "glm")
 
-saveRDS(model_output, paste0("./results/", my_species[species], ".RDS"))
+saveRDS(model_output, paste0("./results/",model,"/", my_species[species], ".RDS"))
+model_waic <- calc_waic(model_output, data_list)
+saveRDS(model_waic, paste0("./results/",model,"/", my_species[species], "_waic.RDS"))
 rm(model_output)
+rm(model_waic)
 
 }
