@@ -2,8 +2,11 @@
 
 source("sourcer.R")
 
-my_rds <- list.files("./results/", pattern = "RDS", full.names = TRUE)
-my_rds_short <- list.files("./results/", pattern = "RDS")
+model <- "global"
+folder <- paste0("./results/", model,"/")
+my_rds <- list.files(folder, pattern = "RDS", full.names = TRUE)
+my_rds <- my_rds[-grep("waic", my_rds)]
+my_rds_short <- sapply(strsplit(my_rds, "/"), "[", 4)
 my_rds_short <- sapply(strsplit(my_rds_short, "\\."), "[", 1)
 
 for(species in 1:length(my_rds)){
@@ -13,11 +16,11 @@ for(species in 1:length(my_rds)){
   tmp_mat <- tmp_mat[,-c(1,grep("z", colnames(tmp_mat)))]
   tmp_mat <- as.data.frame(tmp_mat)
   # save the file
-  data.table::fwrite(tmp_mat, paste0("./results/", my_rds_short[species],
+  data.table::fwrite(tmp_mat, paste0(folder, my_rds_short[species],
                             "_matrix.csv"))
 }
 
-my_res <- list.files("./results/", pattern = "csv", full.names = TRUE)
+my_res <- list.files(folder , pattern = "csv", full.names = TRUE)
 
 # bring in the city data
 cdat <- read.csv("data/city_level_data.csv", stringsAsFactors = FALSE)
@@ -84,13 +87,7 @@ for(species in 1:8 ){
 
 }
 
-sp_name <- gsub("\\./results/", "", my_res) %>% gsub("\\.RDS", "", .)
-# re-write and save them via fwrite
-for(i in 1:8){
-  data.table::fwrite(data.table::data.table(g_res[[i]]), 
-                     paste0("./results/", sp_name[i], "_matrix.csv"))
-}
-g_res
+
 
 # get_mu
 my_mu <- matrix(0, ncol = 8, nrow = nrow(g_res[[1]]))
