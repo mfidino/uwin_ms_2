@@ -1,5 +1,5 @@
 
-which_folder <- "full_model"
+which_folder <- "global"
 
 my_files <- list.files(paste0("./results/", which_folder),
                        pattern = "matrix", 

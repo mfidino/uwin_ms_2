@@ -506,65 +506,6 @@ make_plot.nocorrelates <- function(preds = NULL, species = NULL, add_se = FALSE,
 }
 
 
-make_plot.nocorrelates <- function(preds = NULL, species = NULL, add_se = FALSE,
-                                   intercept = TRUE){
-  
-  my_pred <- preds$mu
-  city_mu <- preds$cmu
-  naive <- preds$z
-  my_se <- preds$cse
-  tiff(paste0("./plots/",species,"/",species,ifelse(intercept, "_intercept", "_slope"),
-              "_nocorrelates.tiff"), height = 4, width = 4, units = "in",
-       res = 400, compression = "lzw")
-  par(mar = c(3.5,4,0.5,0.5))
-  if(intercept){
-    plot(1~1, type ="n", bty = 'l', xlab = "", ylab = "", xaxt = "n",
-         yaxt = "n", ylim = c(0,1), xlim = c(0.5,9.5))
-  }else{
-    plot(1~1, type ="n", bty = 'l', xlab = "", ylab = "", xaxt = "n",
-         yaxt = "n", ylim = c(-2,2), xlim = c(0.5,9.5))
-    
-  }
-  x1 <- seq(0.5, 9.5, length.out = length(my_pred))
-  x2 <- rev(x1)
-  y1 <- rep(my_pred[1],3)
-  y2 <- rev(rep(my_pred[3], 3))
-  polygon(c(x1, x2), c(y1, y2), col = scales::alpha("#32DAC3", .20), border = NA)
-  
-  lines(rep(my_pred[2],3) ~ x1, col = "#32DAC3", lwd = 3)
-  
-  # plot predicted occupancy
-  for(i in 1:ncol(city_mu)){
-    lines(x = rep(i, 2), y = city_mu[-2,i], lwd = 2,
-          col = scales::alpha("#424342", 0.8))
-  }
-  
-  points(city_mu[2,] ~ c(1:9), pch = 21, 
-         bg = scales::alpha("#424342", 0.8), cex = 1)
-  axis(1, at = seq(1, 9, 1), labels = F, tck = -0.025)
-  mtext(text = toupper(rownames(preds$cse)), 1, line = 0.35, 
-        at = seq(1, 9, 1), cex = 0.65)
-  
-  
-  if(intercept){
-    axis(2, at = seq(0,1, 0.25), labels = F, tck = -0.025)
-    axis(2, at = seq(0,1, 0.125), labels = F, tck = -0.025/2)
-    mtext(text = sprintf("%.2f",seq(0,1,0.25)), 2, 
-          line = 0.5, at = seq(0,1,0.25),las = 1)
-    mtext(text = "Average occupancy rate", 2, at = 0.5, cex = 1.2, line = 2.6)
-  }else{
-    axis(2, at = seq(-2,2, 1), labels = F, tck = -0.025)
-    axis(2, at = seq(-2,2, 0.5), labels = F, tck = -0.025/2)
-    mtext(text = sprintf("%.2f",seq(-2,2,1)), 2, 
-          line = 0.5, at = seq(-2,2,1),las = 1)
-    mtext(text = "Response to urbanization", 2, at = 0, cex = 1.2, line = 2.6)
-  }
-  mtext(text = "City", 1, at = 5, cex = 1.2, line = 1.7)
-  #points(naive ~ real_vals, pch = 23, bg = scales::alpha("#FEB600", 0.5), cex = 1.5)
-  
-  dev.off()
-}
-
 
 
 
