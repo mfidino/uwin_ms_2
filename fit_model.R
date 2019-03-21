@@ -97,7 +97,7 @@ hm <- patch_covs %>% group_by(city) %>%
 
 
 hd_cwc <- patch_covs %>% group_by(city) %>% 
-  mutate(hd_1000 = as.numeric(scale(hd_1000))) %>% 
+  mutate(hd_1000 = (hd_1000 - mean(hd_1000)) / 1000) %>% 
   dplyr::select(., hd_1000)
 
 to_plot <- data.frame(city = factor(patch_covs$city, levels = my_meds$city),
