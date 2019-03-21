@@ -83,7 +83,7 @@ city_vec <- as.numeric(factor(det_data$city))
 
 # make the urbanization covariate
 urb500 <- prcomp(patch_covs[,c(7,10)], scale. = TRUE)
-urb1000 <- prcomp(patch_covs[,c(8,11)], scale. = TRUE)
+urb1000 <- prcomp(patch_covs[,c(8,11)], scale. = FALSE)
 urb4000 <- prcomp(patch_covs[,c(9,12)], scale. = TRUE)
 
 urb <- data.frame(urb = urb500$x[,1], urb1 = urb1000$x[,1], urb4 = urb4000$x[,1])
@@ -92,11 +92,19 @@ my_meds <- data.frame(city = patch_covs$city, urb = urb$urb1) %>%
   group_by(city) %>% 
   summarise(um = median(urb))
 
+hm <- patch_covs %>% group_by(city) %>% 
+  summarise(mu = mean(hd_1000), sd = sd(hd_1000))
+
+
+hd_cwc <- patch_covs %>% group_by(city) %>% 
+  mutate(hd_1000 = as.numeric(scale(hd_1000))) %>% 
+  dplyr::select(., hd_1000)
+
 to_plot <- data.frame(city = factor(patch_covs$city, levels = my_meds$city),
                       urb = urb$urb1)
 
 
-bx[,2] <- urb$urb1
+bx[,2] <- hd_cwc$hd_1000
 # make the patch level detection covariates
 dx <- matrix(1, ncol = ndet_covs, nsite)
 
