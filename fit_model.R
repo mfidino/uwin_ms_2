@@ -10,7 +10,7 @@ source("sourcer.R")
 
 # Read in the data
 det_data <- read.csv("./data/detection_data.csv", stringsAsFactors = FALSE)
-det_data <- det_data[order(det_data$city),]
+det_data <- det_data[order(det_data$year,det_data$city),]
 
 # number of sites
 nsite <- nrow(det_data) - 2 # lost two  austin sites
@@ -18,11 +18,14 @@ nsite <- nrow(det_data) - 2 # lost two  austin sites
 # number of cities
 ncity <- length(unique(det_data$city))
 
+# number of years
+nyear <- length(unique(det_data$year))
+
 # number of patch level parameters (including intercept)
 npatch_covs <- 2
 
 # number of city level parameters (including intercept)
-ncity_covs <- 4
+ncity_covs <- 3
 
 # number of detection parameters (including intercept)
 ndet_covs <- 1
@@ -48,18 +51,29 @@ all_sites <- read.csv("./data/uwin_all_sites.csv", stringsAsFactors = FALSE)[,-2
 
 patch_covs <- left_join(patch_covs, all_sites[,c(1,2)], by = c("site" = "LocationName" ))
 
-# work on making the site code in patch_covs
-sc_tmp <- stringr::str_pad(patch_covs$LocationID, width = 3, pad = "0")
-sc_tmp <- paste(tolower(patch_covs$city), sc_tmp, sep = "-")
-patch_covs$site_code <- sc_tmp
+
+# to join these we grab the unique name of the city and then the site code info.
+sc_temp <- paste(tolower(patch_covs$city), patch_covs$LocationID, 2, sep="-")
+
+det_temp <- strsplit(det_data$site, "-") %>% sapply(., function(x)paste(x[1], x[2], sep="-") )
+det_temp <- paste(det_data$city, det_temp, sep = "-")
+
+det_data$site_code <- det_temp
+
+patch_covs$site_code <- sc_temp
 
 
 # compile down to just the sites that we have data for
 patch_covs <- patch_covs[which(patch_covs$site_code %in% as.character(det_data$site_code)),]
 
+# replicate patch covs for varying years
+
+patch_covs <- left_join(det_data[,c("site_code", "year")], patch_covs[,c("site_code", "city", "hd_1000")],
+                  by = "site_code") %>% na.omit %>% arrange(year, site_code)
+
 ds <-as.character(det_data$site_code)
 
-det_data <- det_data[-which(det_data$site_code %in% ds[-which(ds %in% patch_covs$site_code)]),]
+det_data <- det_data[-which(det_data$site_code %in% ds[-which(ds %in% patch_covs$site_code)]),] %>% arrange(year,site_code)
 
 # bring in the number
 det_events <- read.csv("./data/species_in_cities.csv")
@@ -80,23 +94,14 @@ colnames(has_species) <- colnames(det_data)[4:11]
 # make a numeric vector for which city it is
 city_vec <- as.numeric(factor(det_data$city))
 
+# group center housing density
 
-# make the urbanization covariate
-urb500 <- prcomp(patch_covs[,c(7,10)], scale. = TRUE)
-urb1000 <- prcomp(patch_covs[,c(8,11)], scale. = FALSE)
-urb4000 <- prcomp(patch_covs[,c(9,12)], scale. = TRUE)
-
-urb <- data.frame(urb = urb500$x[,1], urb1 = urb1000$x[,1], urb4 = urb4000$x[,1])
-
-my_meds <- data.frame(city = patch_covs$city, urb = urb$urb1) %>% 
-  group_by(city) %>% 
-  summarise(um = median(urb))
-
-hm <- patch_covs %>% group_by(city) %>% 
+# need to do a better job figuring out what goes where now.
+hm <- patch_covs %>% group_by(city, year) %>% 
   summarise(mu = mean(hd_1000), sd = sd(hd_1000))
 
 
-hd_cwc <- patch_covs %>% group_by(city) %>% 
+hd_cwc <- patch_covs %>% group_by(city, year) %>% 
   mutate(hd_1000 = (hd_1000 - mean(hd_1000)) / 1000) %>% 
   dplyr::select(., hd_1000)
 
