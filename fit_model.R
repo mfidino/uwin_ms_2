@@ -10,7 +10,7 @@ source("sourcer.R")
 
 # Read in the data
 det_data <- read.csv("./data/detection_data.csv", stringsAsFactors = FALSE)
-det_data <- det_data[order(det_data$year,det_data$city),]
+det_data <- det_data[order(det_data$city,det_data$year),]
 
 # number of sites
 nsite <- nrow(det_data) - 2 # lost two  austin sites
@@ -97,17 +97,13 @@ city_vec <- as.numeric(factor(det_data$city))
 # group center housing density
 
 # need to do a better job figuring out what goes where now.
-hm <- patch_covs %>% group_by(city, year) %>% 
-  summarise(mu = mean(hd_1000), sd = sd(hd_1000))
+city_mu <- patch_covs %>% group_by(city) %>% 
+  summarise(mu = mean(hd_1000))
 
 
-hd_cwc <- patch_covs %>% group_by(city, year) %>% 
+hd_cwc <- patch_covs %>% group_by(city) %>% 
   mutate(hd_1000 = (hd_1000 - mean(hd_1000)) / 1000) %>% 
-  dplyr::select(., hd_1000)
-
-to_plot <- data.frame(city = factor(patch_covs$city, levels = my_meds$city),
-                      urb = urb$urb1)
-
+  dplyr::select(., site_code,hd_1000, year )
 
 bx[,2] <- hd_cwc$hd_1000
 # make the patch level detection covariates
@@ -124,7 +120,7 @@ U <- matrix(1, ncol = ncity_covs, nrow = ncity)
 scale_cdat <- cdat %>% mutate_if(is.numeric, scale)
 
 # get only the covars we want
-to_keep_city <- c("habitat", "pop10_dens", "latitude")
+to_keep_city <- c("habitat", "pop10_dens")
 U[,-1] <- scale_cdat[,to_keep_city] %>% as.matrix
 
 # Settings for the jags models
