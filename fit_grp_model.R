@@ -123,7 +123,7 @@ U <- matrix(1, ncol = 3, nrow = ncity)
 scale_cdat <- cdat %>% mutate_if(is.numeric, scale)
 
 # get only the covars we want
-to_keep_city <- c("habitat", "pop10_dens")
+to_keep_city <- c("habitat", "hden")
 U[,-1] <- scale_cdat[,to_keep_city] %>% as.matrix
 
 bx[,2] <- U[city_vec, 2]
@@ -152,7 +152,7 @@ my_model <- "./jags_scripts/simpler_model.R"
 nchain <- 6
 nadapt <- 10000
 nburnin <- 50000
-nsample <- 83333
+nsample <- 30000
 nthin <- 2
 my_method <- "parallel"
 
@@ -161,7 +161,7 @@ my_species <- colnames(has_species)
 
 # Fit global model
 model <- "global"
-for(species in 1:nspecies) {
+for(species in 6:nspecies) {
   print(species)
   
   data_list <- list(
@@ -208,7 +208,7 @@ for(species in 1:nspecies) {
     inits = initsimp, summarise = FALSE, modules = "glm")
   
   saveRDS(model_output, paste0("./results/",model,"/", my_species[species], "_moredata.RDS"))
-  model_waic <- calc_waic(model_output, data_list)
+  #model_waic <- calc_waic(model_output, data_list)
   #saveRDS(model_waic, paste0("./results/",model,"/", my_species[species], "_waic.RDS"))
   rm(model_output)
   #rm(model_waic)
