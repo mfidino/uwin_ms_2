@@ -123,11 +123,18 @@ scale_cdat <- cdat %>% mutate_if(is.numeric, scale)
 to_keep_city <- c("habitat", "pop10_dens")
 U[,-1] <- scale_cdat[,to_keep_city] %>% as.matrix
 
+# count number of repeat years at a city
+city_has_data <- (table(hd_cwc$city, hd_cwc$year) > 0) %>% apply(., 2, as.numeric)
+
+rep_count <- rowSums(city_has_data)
+
+
+
 # Settings for the jags models
 to_monitor <- c("B", "G", "D",
               "rho_mu", "rho_sigma", "rho_cor",
-              "sigma.int", "sigma.urb", "z")
-my_model <- "./jags_scripts/mvn_occupancy_3preds.R"
+              "sigma.int", "sigma.urb", "b_2016", "b_2018")
+my_model <- "./jags_scripts/mvn_occupancy.R"
 nchain <- 6
 nadapt <- 3e6
 nburnin <- 2e6
@@ -188,7 +195,7 @@ model_output <- run.jags(
   burnin = nburnin,  sample = nsample, thin = nthin, method = my_method,
   inits = inits, summarise = FALSE, modules = "glm")
 
-saveRDS(model_output, paste0("./results/",model,"/", my_species[species], ".RDS"))
+saveRDS(model_output, paste0("./results/",model,"/", my_species[species], "_moredata.RDS"))
 model_waic <- calc_waic(model_output, data_list)
 #saveRDS(model_waic, paste0("./results/",model,"/", my_species[species], "_waic.RDS"))
 rm(model_output)
