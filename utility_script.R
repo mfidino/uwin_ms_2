@@ -80,11 +80,11 @@ initsimp <- function(chain){
   gen_list <- function(chain = chain){
     list( 
       z = z,
-      B = rnorm(5),
-      Bmu = rnorm(1),
-      B0 = rnorm(10),
-      D0 = rnorm(10),
-      Dmu = rnorm(1),
+      B = rnorm(5,-1),
+      Bmu = rnorm(1, -1),
+      B0 = rnorm(10, -1),
+      D0 = rnorm(10, -2),
+      Dmu = rnorm(1, -2),
       psi_tau = rgamma(1,1),
       rho_tau = rgamma(1,1),
       .RNG.name = switch(chain,

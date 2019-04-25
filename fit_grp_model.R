@@ -13,7 +13,7 @@ det_data <- read.csv("./data/detection_data.csv", stringsAsFactors = FALSE)
 det_data <- det_data[order(det_data$city,det_data$year),]
 
 # number of sites
-nsite <- nrow(det_data) - 2 # lost two  austin sites
+nsite <- nrow(det_data)
 
 # number of cities
 ncity <- length(unique(det_data$city))
@@ -32,7 +32,7 @@ nspecies <- 8
 
 # make the patch level occupancy covariates
 #  this is for each sampling location per city
-bx <- matrix(1, ncol = npatch_covs, nrow = nsite-2) # FOR NOW
+bx <- matrix(1, ncol = npatch_covs, nrow = nsite)
 
 # locate file path for each cities covariates
 #  they all end with "covs.csv" and are nested in the data folder
@@ -71,7 +71,7 @@ patch_covs <- left_join(det_data[,c("site_code", "year")], patch_covs[,c("site_c
 
 ds <-as.character(det_data$site_code)
 
-det_data <- det_data[-which(det_data$site_code %in% ds[-which(ds %in% patch_covs$site_code)]),] %>% arrange(year,site_code)
+det_data <- det_data %>%  arrange(year,site_code)
 
 # bring in the number
 det_events <- read.csv("./data/species_in_cities.csv")
@@ -79,18 +79,16 @@ det_events <- read.csv("./data/species_in_cities.csv")
 
 has_species <- matrix(0, ncol = nspecies, nrow = nrow(det_data))
 
+# make a numeric vector for which city it is
+city_vec <- as.numeric(factor(det_data$city))
+
 for(species in 1:nspecies){
-  has_species[,species] <- det_events[, species +2] %>% 
-    unlist %>% 
-    as.numeric %>% 
-    rep(., times = as.numeric(table(det_data$city)) )
-  
+  has_species[,species] <- det_events[city_vec, species+2]
 }
 
 has_species <- data.frame(has_species)
 colnames(has_species) <- colnames(det_data)[4:11]
-# make a numeric vector for which city it is
-city_vec <- as.numeric(factor(det_data$city))
+
 
 # group center housing density
 
@@ -105,7 +103,7 @@ hd_cwc <- patch_covs %>% group_by(city) %>%
 
 bx[,1] <- hd_cwc$hd_1000
 # make the patch level detection covariates
-dx <- matrix(1, ncol = ndet_covs, nsite-2)
+dx <- matrix(1, ncol = ndet_covs, nsite)
 
 # bring in the city covs
 cdat <- read.csv("data/city_level_data.csv")
@@ -125,6 +123,7 @@ scale_cdat <- cdat %>% mutate_if(is.numeric, scale)
 # get only the covars we want
 to_keep_city <- c("habitat", "hden")
 U[,-1] <- scale_cdat[,to_keep_city] %>% as.matrix
+
 
 bx[,2] <- U[city_vec, 2]
 bx[,3] <- U[city_vec, 3]
@@ -159,17 +158,19 @@ my_method <- "parallel"
 # get the names of the species we are fitting
 my_species <- colnames(has_species)
 
+
+
 # Fit global model
 model <- "global"
-for(species in 6:nspecies) {
-  print(species)
+for(species in 1:8) {
+  print(my_species[species])
   
   data_list <- list(
     y = det_data[,my_species[species]],
     has_species = has_species[,my_species[species]],
     J = det_data$J,
     ncity = ncity,
-    nsite = nsite-2,
+    nsite = nsite,
     npatch_covs = npatch_covs,
     bx = bx,
     city_vec = city_vec,
@@ -207,7 +208,7 @@ for(species in 6:nspecies) {
     burnin = nburnin,  sample = nsample, thin = nthin, method = my_method,
     inits = initsimp, summarise = FALSE, modules = "glm")
   
-  saveRDS(model_output, paste0("./results/",model,"/", my_species[species], "_moredata.RDS"))
+  saveRDS(model_output, paste0("./results/",model,"/", my_species[species], "_alldata.RDS"))
   #model_waic <- calc_waic(model_output, data_list)
   #saveRDS(model_waic, paste0("./results/",model,"/", my_species[species], "_waic.RDS"))
   rm(model_output)

@@ -4,16 +4,17 @@ source("sourcer.R")
 
 model <- "global"
 folder <- paste0("./results/", model,"/")
-my_rds <- list.files(folder, pattern = "RDS", full.names = TRUE)
-my_rds <- my_rds[-grep("waic", my_rds)]
+my_rds <- list.files(folder, pattern = "alldata.RDS", full.names = TRUE)
+#my_rds <- my_rds[-grep("waic", my_rds)]
 my_rds_short <- sapply(strsplit(my_rds, "/"), "[", 4)
 my_rds_short <- sapply(strsplit(my_rds_short, "\\."), "[", 1)
+my_rds_short <- gsub("_alldata", "", my_rds_short)
 
 for(species in 1:length(my_rds)){
   tmp_rds <- readRDS(my_rds[species])
   tmp_mat <- as.matrix(as.mcmc.list(tmp_rds), chains = TRUE)
   # drop the z stuff
-  tmp_mat <- tmp_mat[,-c(1,grep("z", colnames(tmp_mat)))]
+  #tmp_mat <- tmp_mat[,-c(1,grep("z", colnames(tmp_mat)))]
   tmp_mat <- as.data.frame(tmp_mat)
   # save the file
   data.table::fwrite(tmp_mat, paste0(folder, my_rds_short[species],
@@ -30,7 +31,7 @@ cdat <- cdat[order(cdat$city),]
 for(species in 1:length(my_res)){
   # read in the file
   my_mcmc <- data.table::fread(my_res[species], data.table = FALSE) %>% 
-    apply(., 2, HDIofMCMC, .90) %>% t(.)
+    apply(., 2, HDIofMCMC, .95) %>% t(.)
   # round them 
   rmcmc <- round(my_mcmc, 2)
   # paste them together
@@ -39,40 +40,34 @@ for(species in 1:length(my_res)){
            sprintf("%.2f", x[1]), " - ", 
            sprintf("%.2f", x[3]), ")")})
   
-  g_res <- matrix(pmcmc[grep("^G", names(pmcmc))], ncol = 4, nrow = 2)
+
   
-  # get species name
-  g_res <- cbind(my_rds_short[species], c("City intercept", "URB slope"), g_res)
-  colnames(g_res) <- c("Species", "City_pars",
-                       "Intercept", "Habitat amount", 
-                       "Population density", "Latitude")
   
   # standard deviation now
   
-  sd_res <- matrix(pmcmc[grep("sigma\\.urb|sigma\\.int|rho_cor", names(pmcmc))], 
-                   ncol = 3, 
+  sd_res <- matrix(pmcmc[grep("sd", names(pmcmc))], 
+                   ncol = 2, 
                    nrow = 1)
   sd_res <- cbind(my_rds_short[species],sd_res)
-  colnames(sd_res) <- c("Species","Correlation",  "Intercept", "URB slope")
+  colnames(sd_res) <- c("Species","psi_sd", "rho_sd")
   
   # city specific now
   
-  b_res <- matrix(pmcmc[grep("^B", names(pmcmc))], ncol = 2, nrow = 9)
+  b_res <- matrix(pmcmc[grep("^B", names(pmcmc))], ncol = 1, nrow = 16)
   
-  b_res <- cbind(my_rds_short[species], cdat$city, b_res)
-  colnames(b_res) <- c("Species", "City", "Intercept", "URB slope")
+  b_res <- cbind(my_rds_short[species], 
+                 c(cdat$city, "within_urb", "between_prophab", "between_hden", 
+                   "prophab_onurb", "hden_onurb", "Bmu"), b_res)
+  colnames(b_res) <- c("Species", "parameter", "estimate")
   
   
   if(species == 1){
-    write.csv(g_res,"./results_summary/city_differences_90.csv", row.names = FALSE)
-    write.csv(sd_res, "./results_summary/city_sd_90.csv", row.names = FALSE)
-    write.csv(b_res, "./results_summary/within_city_90.csv", row.names = FALSE)
+    write.csv(sd_res, "./results_summary/city_sd2.csv", row.names = FALSE)
+    write.csv(b_res, "./results_summary/within_city2.csv", row.names = FALSE)
   } else{
-    write.table(g_res,"./results_summary/city_differences_90.csv", row.names = FALSE,
+    write.table(sd_res,"./results_summary/city_sd2.csv", row.names = FALSE,
                 append = TRUE, sep = ",", col.names = FALSE)
-    write.table(sd_res,"./results_summary/city_sd_90.csv", row.names = FALSE,
-                append = TRUE, sep = ",", col.names = FALSE)
-    write.table(b_res, "./results_summary/within_city_90.csv", row.names = FALSE, 
+    write.table(b_res, "./results_summary/within_city2.csv", row.names = FALSE, 
                 col.names = FALSE,
                 append = TRUE, sep = ",")
   }
@@ -80,12 +75,6 @@ for(species in 1:length(my_res)){
   
 }
 
-g_res <- vector("list", length = length(my_res))
-for(species in 1:8 ){
-  g_res[[species]] <- fread(my_res[species], data.table = FALSE) 
-  
-
-}
 
 
 
