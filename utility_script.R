@@ -76,6 +76,43 @@ inits <- function(chain){
 }
 
 
+initsimp <- function(chain){
+  gen_list <- function(chain = chain){
+    list( 
+      z = z,
+      B = rnorm(5,-1),
+      Bmu = rnorm(1, -1),
+      B0 = rnorm(10, -1),
+      D0 = rnorm(10, -2),
+      Dmu = rnorm(1, -2),
+      psi_tau = rgamma(1,1),
+      rho_tau = rgamma(1,1),
+      .RNG.name = switch(chain,
+                         "1" = "base::Wichmann-Hill",
+                         "2" = "base::Marsaglia-Multicarry",
+                         "3" = "base::Super-Duper",
+                         "4" = "base::Mersenne-Twister",
+                         "5" = "base::Wichmann-Hill",
+                         "6" = "base::Marsaglia-Multicarry",
+                         "7" = "base::Super-Duper",
+                         "8" = "base::Mersenne-Twister"),
+      .RNG.seed = sample(1:1e+06, 1)
+    )
+  }
+  return(switch(chain,           
+                "1" = gen_list(chain),
+                "2" = gen_list(chain),
+                "3" = gen_list(chain),
+                "4" = gen_list(chain),
+                "5" = gen_list(chain),
+                "6" = gen_list(chain),
+                "7" = gen_list(chain),
+                "8" = gen_list(chain)
+  )
+  )
+}
+
+
 calc_waic <- function(posterior = NULL, 
                       data = NULL ){
   cat("Calculating WAIC\n")
