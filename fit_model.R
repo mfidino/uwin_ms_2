@@ -74,7 +74,7 @@ patch_covs <- left_join(det_data[,c("site_code", "year")], patch_covs[,c("site_c
 
 ds <-as.character(det_data$site_code)
 
-det_data <- det_data[-which(det_data$site_code %in% ds[-which(ds %in% patch_covs$site_code)]),] %>% arrange(year,site_code)
+det_data <- det_data %>% arrange(year,site_code)
 
 # bring in the number
 det_events <- read.csv("./data/species_in_cities.csv")
