@@ -13,7 +13,7 @@ det_data <- read.csv("./data/detection_data.csv", stringsAsFactors = FALSE)
 det_data <- det_data[order(det_data$city,det_data$year),]
 
 # number of sites
-nsite <- nrow(det_data) - 2 # lost two  austin sites
+nsite <- nrow(det_data) 
 
 # number of cities
 ncity <- length(unique(det_data$city))
@@ -35,7 +35,7 @@ nspecies <- 8
 
 # make the patch level occupancy covariates
 #  this is for each sampling location per city
-bx <- matrix(1, ncol = npatch_covs, nrow = nsite-2) # FOR NOW
+bx <- matrix(1, ncol = npatch_covs, nrow = nsite)
 
 # locate file path for each cities covariates
 #  they all end with "covs.csv" and are nested in the data folder
