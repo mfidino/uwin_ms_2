@@ -1,55 +1,64 @@
-gen_preds.popdens <- function(mmat = NULL, occ_data = NULL, 
-                              city_covs = NULL, species = NULL, intercept = TRUE){
-  if(intercept){
-    occ_data$city <- factor(as.character(occ_data$city))
-    z <- occ_data[,species]
-    z[z>1] <- 1
-    ob_occ <- table(z, occ_data$city)
-  naive <- ob_occ[2,] / colSums(ob_occ)
-  nse <- sqrt((ob_occ[2,] * naive * (1 - naive)) / colSums(ob_occ))
-  nlow <- naive - nse
-  nlow[nlow < 0] <- 0
-  nhigh <- naive + nse
-  nhigh[nhigh>1] <- 1
-  my_se <- cbind(nlow, nhigh)
+predict.city <- function(mmat = NULL, occ_data = NULL, 
+                        new_data = NULL, species = NULL,
+                        city_data = NULL, 
+                        new_city_data = NULL,
+                        species_there = NULL){
   
-  col_loc <- grep("B\\[\\w,1", colnames(mmat))
-  city_mu <- apply(plogis(mmat[,col_loc]), 2, HDIofMCMC)
-  
-  # calc expected mean from group level regression
-  x_range <- seq(100, 2000, by = 5)
-  x <- (x_range - unlist(attributes(city_covs))[3]) / 
-    unlist(attributes(city_covs))[4]
-  
-  x <- cbind(1, x)
-  col_loc <- grep("G\\[1,1\\]|G\\[1,3\\]", colnames(mmat))
-  my_pred <- apply(plogis(mmat[,col_loc] %*% t(x)), 2, HDIofMCMC)
-  
-  real_vals <- as.numeric(DMwR::unscale(city_covs, city_covs))
-  
-  return(list(z = naive, mu = my_pred, cmu = city_mu, 
-              mu.x = x_range, city.x = real_vals, cse = my_se))
-  }else{
-    
-    col_loc <- grep("B\\[\\w,2", colnames(mmat))
-    city_mu <- apply(mmat[,col_loc], 2, HDIofMCMC)
-    
-    # calc expected mean from group level regression
-    x_range <- seq(100, 2000, by = 5)
-    x <- (x_range - unlist(attributes(city_covs))[3]) / 
-      unlist(attributes(city_covs))[4]
-    
-    x <- cbind(1, x)
-    col_loc <- grep("G\\[2,1\\]|G\\[2,3\\]", colnames(mmat))
-    my_pred <- apply(mmat[,col_loc] %*% t(x), 2, HDIofMCMC)
-    
-    real_vals <- as.numeric(DMwR::unscale(city_covs, city_covs))
-    
-    return(list(z = NA, mu = my_pred, cmu = city_mu, 
-                mu.x = x_range, city.x = real_vals, cse = NA))
-    
+  # check new_data
+  if(!class(new_data) == 'data.frame'){
+    stop('new_data must be a data.frame')
+  }
+  if(!all(colnames(new_data) == c('hden', 'prophab_btwn', 'hden_btwn'))){
+    err <- paste0('The column names in new_data must be (in this order):\n',
+                  '\t(1) hden\n',
+                  '\t(2) prophab_btwn\n',
+                  '\t(3) hden_btwn\n')
+    stop(err)
   }
   
+  # for scaling
+  s_data <- new_data
+  # prepare new data for the posterior
+  # step 1. scale the data as needed
+  if( !all(s_data$prophab_btwn==0) ){
+  s_data$prophab_btwn <- (s_data$prophab_btwn - mean(city_data$habitat)) /sd(city_data$habitat)
+  }
+  if( !all(s_data$hden_btwn==0) ){
+  s_data$hden_btwn <- (s_data$hden_btwn - mean(city_data$hden)) /sd(city_data$hden)
+  }
+  # construct the model matrix
+  s_data <- model.matrix(~hden*prophab_btwn + hden*hden_btwn, s_data)
+  
+  # make mean preds
+  mu_post <- mmat[,c(grep("Bmu", colnames(mmat)), grep("B\\[", colnames(mmat)))]
+  colnames(mu_post) <- c("(Intercept)", "hden", "prophab_btwn", "hden_btwn", "hden:prophab_btwn", "hden:hden_btwn")
+  
+  preds <- mu_post %*% t(s_data)
+  # credible intervals
+  ci_preds <- plogis(t(apply(preds, 2, quantile, probs = c(0.025,0.5,0.975))))
+  
+
+  # get city-specific predictions
+  #  determine which intercepts to gather
+  where_species <- which(species_there == 1)
+  to_collect <- paste0("B0\\[",  where_species,"\\]")
+  
+  
+  s_citydata <- data.frame(scale(new_city_data))
+  s_citydata <- data.frame(apply(s_citydata, 2, function(x) ifelse(is.nan(x), 0, x)))
+  s_citydata <- model.matrix(~hden*prophab_btwn + hden*hden_btwn, s_citydata )
+  s_citydata <- s_citydata[where_species,]
+  
+  city_preds <- matrix(0, ncol = 3, nrow = length(to_collect))
+  for(city in 1:length(to_collect)){
+    city_post <- mmat[,c(grep(to_collect[city], colnames(mmat)), grep("B\\[", colnames(mmat)))]
+    colnames(city_post) <- c("(Intercept)", "hden", "prophab_btwn", "hden_btwn", "hden:prophab_btwn", "hden:hden_btwn")
+    tmp_preds <- city_post %*% s_citydata[city,]
+    city_preds[city,] <- plogis(quantile(tmp_preds, c(0.025,0.5,0.975)))
+    }
+  
+    return(list( mu = ci_preds, cmu = city_preds,
+                cities = where_species))
   
 }
 
