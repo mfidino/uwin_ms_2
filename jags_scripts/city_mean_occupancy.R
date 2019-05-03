@@ -1,9 +1,9 @@
 model{
   # Latent state model
   for(site in 1:nsite){
-    logit(psi[site]) <- Bmu + inprod(B, bx[site,]) + 
+    logit(psi[site]) <- B0[city_vec[site]] + inprod(B, bx[site,]) + 
       b_2016[city_vec[site]] * in_2016[site] + 
-      b_2018[city_vec[site]] * in_2018[site] + B0[city_vec[site]]
+      b_2018[city_vec[site]] * in_2018[site] 
     z[site] ~ dbern(psi[site]* has_species[site])
     
   }
@@ -14,8 +14,8 @@ model{
   }
   # priors
   for(city in 1:ncity){
-    B0[city] ~ dnorm(0, psi_tau)
-    D0[city] ~ dnorm(0, rho_tau)
+    B0[city] ~ dnorm(Bmu, psi_tau)
+    D0[city] ~ dnorm(Dmu, rho_tau)
   }
   Bmu ~ dlogis(0,1)
   Dmu ~ dlogis(0,1)
