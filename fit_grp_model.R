@@ -73,7 +73,7 @@ for(species in 1:8) {
     burnin = nburnin,  sample = nsample, thin = nthin, method = my_method,
     inits = initsimp, summarise = FALSE, modules = "glm")
   
-  saveRDS(model_output, paste0("./results/",model,"/", my_species[species], "_alldata.RDS"))
+  saveRDS(model_output, paste0("./results/",model,"/", my_species[species], "_ranefshift.RDS"))
   #model_waic <- calc_waic(model_output, data_list)
   #saveRDS(model_waic, paste0("./results/",model,"/", my_species[species], "_waic.RDS"))
   rm(model_output)
