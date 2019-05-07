@@ -21,7 +21,7 @@ for(species in 1:length(my_rds)){
   data.table::fwrite(tmp_mat, paste0(folder, my_rds_short[species],
                             "_matrix.csv"))
   data.table::fwrite(tmp_matz, paste0(folder, my_rds_short[species],
-                                     "_zmatrix.csv"))
+                                     "_zed.csv"))
 }
 
 my_res <- list.files(folder , pattern = "csv", full.names = TRUE)
