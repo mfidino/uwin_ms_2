@@ -64,8 +64,14 @@ ds <-as.character(det_data$site_code)
 det_data <- det_data %>%  arrange(year,site_code)
 
 # bring in the number
-det_events <- read.csv("./data/species_in_cities.csv")
+#det_events <- read.csv("./data/species_in_cities.csv")
 
+det_events <- det_data %>% group_by(city) %>% 
+  summarise_if(.predicate = is.numeric, sum)
+det_events <- det_events[,c(3:10)]
+
+
+det_events<- apply(det_events, 2, function(x) ifelse(x>0, 1, 0))
 
 has_species <- matrix(0, ncol = nspecies, nrow = nrow(det_data))
 
@@ -73,7 +79,7 @@ has_species <- matrix(0, ncol = nspecies, nrow = nrow(det_data))
 city_vec <- as.numeric(factor(det_data$city))
 
 for(species in 1:nspecies){
-  has_species[,species] <- det_events[city_vec, species+2]
+  has_species[,species] <- det_events[city_vec, species]
 }
 
 has_species <- data.frame(has_species)

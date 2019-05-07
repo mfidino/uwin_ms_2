@@ -2,23 +2,26 @@
 
 source("sourcer.R")
 
-model <- "global"
+model <- "rerun"
 folder <- paste0("./results/", model,"/")
-my_rds <- list.files(folder, pattern = "alldata.RDS", full.names = TRUE)
+my_rds <- list.files(folder, pattern = "ranefshift.RDS", full.names = TRUE)
 #my_rds <- my_rds[-grep("waic", my_rds)]
 my_rds_short <- sapply(strsplit(my_rds, "/"), "[", 4)
 my_rds_short <- sapply(strsplit(my_rds_short, "\\."), "[", 1)
-my_rds_short <- gsub("_alldata", "", my_rds_short)
+my_rds_short <- gsub("_ranefshift", "", my_rds_short)
 
 for(species in 1:length(my_rds)){
   tmp_rds <- readRDS(my_rds[species])
   tmp_mat <- as.matrix(as.mcmc.list(tmp_rds), chains = TRUE)
   # drop the z stuff
-  #tmp_mat <- tmp_mat[,-c(1,grep("z", colnames(tmp_mat)))]
+  tmp_matz <- tmp_mat[,grep("z", colnames(tmp_mat))]
+  tmp_mat <- tmp_mat[,-c(1,grep("z", colnames(tmp_mat)))]
   tmp_mat <- as.data.frame(tmp_mat)
   # save the file
   data.table::fwrite(tmp_mat, paste0(folder, my_rds_short[species],
                             "_matrix.csv"))
+  data.table::fwrite(tmp_matz, paste0(folder, my_rds_short[species],
+                                     "_zmatrix.csv"))
 }
 
 my_res <- list.files(folder , pattern = "csv", full.names = TRUE)
@@ -62,12 +65,12 @@ for(species in 1:length(my_res)){
   
   
   if(species == 1){
-    write.csv(sd_res, "./results_summary/city_sd2.csv", row.names = FALSE)
-    write.csv(b_res, "./results_summary/within_city2.csv", row.names = FALSE)
+    write.csv(sd_res, "./results_summary/city_sd_3.csv", row.names = FALSE)
+    write.csv(b_res, "./results_summary/within_city3.csv", row.names = FALSE)
   } else{
-    write.table(sd_res,"./results_summary/city_sd2.csv", row.names = FALSE,
+    write.table(sd_res,"./results_summary/city_sd3.csv", row.names = FALSE,
                 append = TRUE, sep = ",", col.names = FALSE)
-    write.table(b_res, "./results_summary/within_city2.csv", row.names = FALSE, 
+    write.table(b_res, "./results_summary/within_city3.csv", row.names = FALSE, 
                 col.names = FALSE,
                 append = TRUE, sep = ",")
   }

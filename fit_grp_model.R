@@ -10,7 +10,7 @@ source("sourcer.R")
 
 # Settings for the jags models
 to_monitor <- c("B0", "B", "Bmu", "b_2016", "b_2018",
-                "D0", "Dmu", "psi_sd", "rho_sd")
+                "D0", "Dmu", "psi_sd", "rho_sd", "z")
 
 my_model <- "./jags_scripts/city_mean_occupancy.R"
 nchain <- 6
@@ -26,7 +26,7 @@ my_species <- colnames(has_species)
 
 
 # Fit global model
-model <- "global"
+model <- "rerun"
 for(species in 1:8) {
   print(my_species[species])
   

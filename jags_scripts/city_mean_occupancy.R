@@ -9,7 +9,7 @@ model{
   }
   # Observation model
   for(site in 1:nsite){
-    logit(rho[site]) <- Dmu + D0[city_vec[site]]
+    logit(rho[site]) <- D0[city_vec[site]]
     y[site] ~ dbin(rho[site] * z[site], J[site])
   }
   # priors
