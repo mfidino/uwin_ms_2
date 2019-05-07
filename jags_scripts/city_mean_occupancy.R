@@ -3,13 +3,13 @@ model{
   for(site in 1:nsite){
     logit(psi[site]) <- B0[city_vec[site]] + inprod(B, bx[site,]) + 
       b_2016[city_vec[site]] * in_2016[site] + 
-      b_2018[city_vec[site]] * in_2018[site]
+      b_2018[city_vec[site]] * in_2018[site] 
     z[site] ~ dbern(psi[site]* has_species[site])
     
   }
   # Observation model
   for(site in 1:nsite){
-    logit(rho[site]) <- D0[city_vec[site]]
+    logit(rho[site]) <- Dmu + D0[city_vec[site]]
     y[site] ~ dbin(rho[site] * z[site], J[site])
   }
   # priors

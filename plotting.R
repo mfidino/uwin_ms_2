@@ -1,3 +1,4 @@
+source("sourcer.R")
 
 which_folder <- "global"
 
@@ -22,6 +23,70 @@ for(species in 1:length(sp_name)){
                     as.matrix(.)
   
   # psi_mu(population density)
+  new_data <- data.frame(hden = 0,
+                         prophab_btwn = 0,
+                         hden_btwn = seq(300, 1400, 10))
+  
+  new_city_data <- data.frame(hden = 0,
+                              prophab_btwn = 0,
+                              hden_btwn = city_data$hden)
+  row.names(new_city_data) <- city_data$city
+  
+  
+  test <- predict.city(mmat = results_matrix,
+                       new_data = new_data,
+                       city_data = cdat,
+                       new_city_data = new_city_data,
+                       species_there = det_events[,sp_name[species]])
+  
+  plot(test$mu[,2] ~ new_data$hden_btwn, ylim = c(0,1), type = 'l',
+       main = sp_name[species], xlab = 'average housing density', ylab = 'occupancy',
+       bty = 'l')
+  lines(test$mu[,1] ~ new_data$hden_btwn, lty = 2)
+  lines(test$mu[,3] ~ new_data$hden_btwn, lty = 2)
+  points(test$cmu[,2] ~ new_city_data$hden_btwn[test$cities], pch = 19)
+  where_sp <- test$cities
+  for(i in 1:length(where_sp)){
+    lines(x = rep(new_city_data$hden_btwn[where_sp[i]], 2), y = test$cmu[i,-2])
+  }
+}
+
+for(species in 1:length(sp_name)){
+  # read in the mcmc matrix
+  results_matrix <- data.table::fread(my_files[species],
+                                      data.table = FALSE) %>% 
+    as.matrix(.)
+  
+  # psi_mu(population density)
+  new_data <- data.frame(hden = 0,
+                         prophab_btwn = seq(0.15, 0.65, 0.005),
+                         hden_btwn = 0)
+  
+  new_city_data <- data.frame(hden = 0,
+                              prophab_btwn = city_data$habitat,
+                              hden_btwn = 0)
+  row.names(new_city_data) <- city_data$city
+  
+  
+  test <- predict.city(mmat = results_matrix,
+                       new_data = new_data,
+                       city_data = cdat,
+                       new_city_data = new_city_data,
+                       species_there = det_events[,sp_name[species]])
+  
+  plot(test$mu[,2] ~ new_data$prophab_btwn, ylim = c(0,1), type = 'l',
+       main = sp_name[species], xlab = 'Proportion green space', ylab = 'occupancy',
+       bty = 'l')
+  lines(test$mu[,1] ~ new_data$prophab_btwn, lty = 2)
+  lines(test$mu[,3] ~ new_data$prophab_btwn, lty = 2)
+  points(test$cmu[,2] ~ new_city_data$prophab_btwn[test$cities], pch = 19)
+  where_sp <- test$cities
+  for(i in 1:length(where_sp)){
+    lines(x = rep(new_city_data$prophab_btwn[where_sp[i]], 2), y = test$cmu[i,-2])
+  }
+}
+
+  
   results_matrix %>% 
     gen_preds.popdens(., occ_data = det_data, 
                       city_covs = scale_cdat$pop10_dens,

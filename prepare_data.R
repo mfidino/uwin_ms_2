@@ -1,19 +1,9 @@
-
-################################
-# Load and fit multi-city models
-#
-# Code written by Mason Fidino
-################################
-
-source("sourcer.R")
-
-
 # Read in the data
 det_data <- read.csv("./data/detection_data.csv", stringsAsFactors = FALSE)
 det_data <- det_data[order(det_data$city,det_data$year),]
 
 # number of sites
-nsite <- nrow(det_data) 
+nsite <- nrow(det_data)
 
 # number of cities
 ncity <- length(unique(det_data$city))
@@ -21,11 +11,8 @@ ncity <- length(unique(det_data$city))
 # number of years
 nyear <- length(unique(det_data$year))
 
-# number of patch level parameters (including intercept)
-npatch_covs <- 2
-
-# number of city level parameters (including intercept)
-ncity_covs <- 3
+# number of patch level parameters (excluding intercept)
+npatch_covs <- 5
 
 # number of detection parameters (including intercept)
 ndet_covs <- 1
@@ -70,11 +57,11 @@ patch_covs <- patch_covs[which(patch_covs$site_code %in% as.character(det_data$s
 # replicate patch covs for varying years
 
 patch_covs <- left_join(det_data[,c("site_code", "year")], patch_covs[,c("site_code", "city", "hd_1000")],
-                  by = "site_code") %>% na.omit %>% arrange(year, site_code)
+                        by = "site_code") %>% na.omit %>% arrange(year, site_code)
 
 ds <-as.character(det_data$site_code)
 
-det_data <- det_data %>% arrange(year,site_code)
+det_data <- det_data %>%  arrange(year,site_code)
 
 # bring in the number
 det_events <- read.csv("./data/species_in_cities.csv")
@@ -82,18 +69,16 @@ det_events <- read.csv("./data/species_in_cities.csv")
 
 has_species <- matrix(0, ncol = nspecies, nrow = nrow(det_data))
 
-for(species in 1:nspecies){
-  has_species[,species] <- det_events[, species +2] %>% 
-    unlist %>% 
-    as.numeric %>% 
-    rep(., times = as.numeric(table(det_data$city)) )
+# make a numeric vector for which city it is
+city_vec <- as.numeric(factor(det_data$city))
 
+for(species in 1:nspecies){
+  has_species[,species] <- det_events[city_vec, species+2]
 }
 
 has_species <- data.frame(has_species)
 colnames(has_species) <- colnames(det_data)[4:11]
-# make a numeric vector for which city it is
-city_vec <- as.numeric(factor(det_data$city))
+
 
 # group center housing density
 
@@ -106,14 +91,13 @@ hd_cwc <- patch_covs %>% group_by(city) %>%
   mutate(hd_1000 = (hd_1000 - mean(hd_1000)) / 1000) %>% 
   dplyr::select(., site_code,hd_1000, year )
 
-bx[,2] <- hd_cwc$hd_1000
+bx[,1] <- hd_cwc$hd_1000
 # make the patch level detection covariates
-dx <- matrix(1, ncol = ndet_covs, nsite-2)
+dx <- matrix(1, ncol = ndet_covs, nsite)
 
 # bring in the city covs
 cdat <- read.csv("data/city_level_data.csv")
 cdat <- cdat[order(cdat$city),]
-
 test <- patch_covs %>% group_by(city) %>% 
   summarise(hden = mean(hd_1000))
 
@@ -121,7 +105,7 @@ cdat$hden <- test$hden
 rm(test)
 
 # make the city level covariates
-U <- matrix(1, ncol = ncity_covs, nrow = ncity)
+U <- matrix(1, ncol = 3, nrow = ncity)
 
 # scale cdat
 scale_cdat <- cdat %>% mutate_if(is.numeric, scale)
@@ -129,6 +113,12 @@ scale_cdat <- cdat %>% mutate_if(is.numeric, scale)
 # get only the covars we want
 to_keep_city <- c("habitat", "hden")
 U[,-1] <- scale_cdat[,to_keep_city] %>% as.matrix
+
+
+bx[,2] <- U[city_vec, 2]
+bx[,3] <- U[city_vec, 3]
+bx[,4] <- bx[,1] * bx[,2]
+bx[,5] <- bx[,1] * bx[,3]
 
 # count number of repeat years at a city
 city_has_data <- (table(hd_cwc$city, hd_cwc$year) > 0) %>% apply(., 2, as.numeric)
@@ -140,80 +130,3 @@ my_2018[det_data$city == "lbca"] <- 0
 my_2018[det_data$city == "wide"] <- 0
 
 rep_count <- rowSums(city_has_data)
-
-
-
-# Settings for the jags models
-to_monitor <- c("B", "G", "D",
-              "rho_mu", "rho_sigma", "rho_cor",
-              "sigma.int", "sigma.urb", "b_2016", "b_2018")
-my_model <- "./jags_scripts/mvn_occupancy.R"
-nchain <- 6
-nadapt <- 3e6
-nburnin <- 2e6
-nsample <- 83333
-nthin <- 2
-my_method <- "parallel"
-
-# get the names of the species we are fitting
-my_species <- colnames(has_species)
-
-# Fit global model
-model <- "global"
-for(species in 1:nspecies) {
-  print(species)
-  
-  data_list <- list(
-    y = det_data[,my_species[species]],
-    has_species = has_species[,my_species[species]],
-    J = det_data$J,
-    ncity = ncity,
-    nsite = nsite-2,
-    npatch_covs = npatch_covs,
-    ncity_covs = ncity_covs,
-    ndet_covs = ndet_covs,
-    bx = bx,
-    dx = dx,
-    U = U,
-    city_vec = city_vec,
-    in_2016 = my_2016,
-    in_2018 = my_2018
-  )
-  
-  z <- data_list$y
-  z[z>1] <- 1
-  #if(sum(det_events[,2 + species]) == ncity){
-  #  print("model already exists")
-  #  model_output <- readRDS(paste0("./results/global/",my_species[species],
-  #                                 ".RDS"))
-  #  model_waic <- calc_waic(model_output, data_list)
-  #  saveRDS(model_waic, paste0("./results/",model,"/", my_species[species], "_waic.RDS"))
-  #  rm(model_output)
-  #  rm(model_waic)
-  #  next
-  #}
-  
-  # make y NA if species is not present in a given city
-  if(any(data_list$has_species == 0)){
-  data_list$y[which(data_list$has_species == 0)] <- NA
-  }
-  
-  
-  
-
-model_output <- run.jags(
-  model = my_model,
-  data = data_list,
-  n.chains = nchain,
-  monitor = to_monitor,
-  adapt = nadapt,
-  burnin = nburnin,  sample = nsample, thin = nthin, method = my_method,
-  inits = inits, summarise = FALSE, modules = "glm")
-
-saveRDS(model_output, paste0("./results/",model,"/", my_species[species], "_moredata.RDS"))
-model_waic <- calc_waic(model_output, data_list)
-#saveRDS(model_waic, paste0("./results/",model,"/", my_species[species], "_waic.RDS"))
-rm(model_output)
-#rm(model_waic)
-
-}
