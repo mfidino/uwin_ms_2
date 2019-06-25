@@ -2,7 +2,7 @@
 
 source("sourcer.R")
 
-model <- "rerun"
+model <- "reparam_longrun"
 folder <- paste0("./results/", model,"/")
 my_rds <- list.files(folder, pattern = "ranefshift.RDS", full.names = TRUE)
 #my_rds <- my_rds[-grep("waic", my_rds)]
@@ -17,14 +17,17 @@ for(species in 1:length(my_rds)){
   tmp_matz <- tmp_mat[,grep("z", colnames(tmp_mat))]
   tmp_mat <- tmp_mat[,-c(1,grep("z", colnames(tmp_mat)))]
   tmp_mat <- as.data.frame(tmp_mat)
+  tmp_matz <- as.data.frame(tmp_matz)
   # save the file
   data.table::fwrite(tmp_mat, paste0(folder, my_rds_short[species],
                             "_matrix.csv"))
   data.table::fwrite(tmp_matz, paste0(folder, my_rds_short[species],
                                      "_zed.csv"))
+  rm(tmp_mat)
+  rm(tmp_matz)
 }
 
-my_res <- list.files(folder , pattern = "csv", full.names = TRUE)
+my_res <- list.files(folder , pattern = "_matrix.csv$", full.names = TRUE)
 
 # bring in the city data
 cdat <- read.csv("data/city_level_data.csv", stringsAsFactors = FALSE)
@@ -56,21 +59,24 @@ for(species in 1:length(my_res)){
   
   # city specific now
   
-  b_res <- matrix(pmcmc[grep("^B", names(pmcmc))], ncol = 1, nrow = 16)
+  b_res <- matrix(pmcmc[grep("^B|^b1|^b2", names(pmcmc))], ncol = 1, nrow = 36)
+  species_is_there <- as.logical(c(rep(det_events[,my_rds_short[species]], 2), rep(NA, length(b_res) - 20)))
   
   b_res <- cbind(my_rds_short[species], 
-                 c(cdat$city, "within_urb", "between_prophab", "between_hden", 
-                   "prophab_onurb", "hden_onurb", "Bmu"), b_res)
-  colnames(b_res) <- c("Species", "parameter", "estimate")
+                 c(paste0(cdat$city,"-intercept"), paste0(cdat$city,"-slope"), "Bmu", 'between_prophab','between_hden',
+                   'within_urb', 'probhab_onurb', 'hden_onurb', paste0(cdat$city,"-diff")),
+                 species_is_there,
+                 b_res)
+  colnames(b_res) <- c("Species", "parameter",'species_there', "estimate")
   
   
   if(species == 1){
-    write.csv(sd_res, "./results_summary/city_sd_3.csv", row.names = FALSE)
-    write.csv(b_res, "./results_summary/within_city3.csv", row.names = FALSE)
+    write.csv(sd_res, "./results_summary/city_sd4.csv", row.names = FALSE)
+    write.csv(b_res, "./results_summary/within_city4.csv", row.names = FALSE)
   } else{
-    write.table(sd_res,"./results_summary/city_sd3.csv", row.names = FALSE,
+    write.table(sd_res,"./results_summary/city_sd4.csv", row.names = FALSE,
                 append = TRUE, sep = ",", col.names = FALSE)
-    write.table(b_res, "./results_summary/within_city3.csv", row.names = FALSE, 
+    write.table(b_res, "./results_summary/within_city4.csv", row.names = FALSE, 
                 col.names = FALSE,
                 append = TRUE, sep = ",")
   }

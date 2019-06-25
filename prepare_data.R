@@ -39,7 +39,6 @@ all_sites <- read.csv("./data/uwin_all_sites.csv", stringsAsFactors = FALSE)[,-2
 
 patch_covs <- left_join(patch_covs, all_sites[,c(1,2)], by = c("site" = "LocationName" ))
 
-
 # to join these we grab the unique name of the city and then the site code info.
 sc_temp <- paste(tolower(patch_covs$city), patch_covs$LocationID, 2, sep="-")
 
@@ -104,11 +103,16 @@ dx <- matrix(1, ncol = ndet_covs, nsite)
 # bring in the city covs
 cdat <- read.csv("data/city_level_data.csv")
 cdat <- cdat[order(cdat$city),]
+
+#cdat$habitat <- (cdat$habitat - 0.3) 
+
 test <- patch_covs %>% group_by(city) %>% 
   summarise(hden = mean(hd_1000))
 
 cdat$hden <- test$hden
 rm(test)
+
+#cdat$hden <- cdat$hden / 1000
 
 # make the city level covariates
 U <- matrix(1, ncol = 3, nrow = ncity)

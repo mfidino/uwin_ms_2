@@ -1,7 +1,7 @@
 model{
   # Latent state model
   for(site in 1:nsite){
-    logit(psi[site]) <- B0[city_vec[site]] + inprod(B, bx[site,]) + 
+    logit(psi[site]) <- B0[city_vec[site]] + B[city_vec[site]]* bx[site] + 
       b_2016[city_vec[site]] * in_2016[site] + 
       b_2018[city_vec[site]] * in_2018[site] 
     z[site] ~ dbern(psi[site]* has_species[site])
@@ -14,18 +14,20 @@ model{
   }
   # priors
   for(city in 1:ncity){
-    B0[city] ~ dnorm(Bmu, psi_tau)
+    B0[city] ~ dnorm(inprod(b1,U[city,]) , psi_tau)
+    B[city] <- inprod(b2, U[city,])
     D0[city] ~ dnorm(Dmu, rho_tau)
   }
-  Bmu ~ dlogis(0,1)
+  #Bmu ~ dlogis(0,1)
   Dmu ~ dlogis(0,1)
-  psi_tau ~ dgamma(1,1)
-  psi_sd <- 1 / sqrt(psi_tau)
-  rho_tau ~ dgamma(1,1)
+  psi_tau ~ dgamma(0.001,0.001)
+  psi_sd <- 1 / sqrt(psi_tau )
+  rho_tau ~ dgamma(0.001,0.001)
   rho_sd <- 1 / sqrt(rho_tau)
   
   for(pars in 1:npatch_covs){
-    B[pars] ~ dlogis(0,1)
+    b1[pars] ~ dlogis(0,1)
+    b2[pars] ~ dlogis(0,1) 
   }
   # to accomodate repeat sampling in locations. 
   #  Chicago in 2016 (no other cities sampled in 2016)

@@ -40,3 +40,7 @@ rsconnect/
 *.RDS
 *matrix.csv
 *.tiff
+/results/
+
+sp_rich.csv
+tmp_paste.csv

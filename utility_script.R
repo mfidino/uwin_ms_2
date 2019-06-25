@@ -80,13 +80,14 @@ initsimp <- function(chain){
   gen_list <- function(chain = chain){
     list( 
       z = z,
-      B = rnorm(5,-1),
+     # B = rnorm(data_list$ncity,-1),
       Bmu = rnorm(1, -1),
-      B0 = rnorm(10, -1),
-      D0 = rnorm(10, -2),
+      B_diff = rnorm(data_list$ncity, -1),
+      D0 = rnorm(data_list$ncity, -2),
       Dmu = rnorm(1, -2),
       psi_tau = rgamma(1,1),
       rho_tau = rgamma(1,1),
+      alpha = runif(1,.2,.8),
       .RNG.name = switch(chain,
                          "1" = "base::Wichmann-Hill",
                          "2" = "base::Marsaglia-Multicarry",
