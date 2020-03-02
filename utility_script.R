@@ -155,3 +155,17 @@ calc_waic <- function(posterior = NULL,
     return(list(lppd=lppd, p_WAIC=p_WAIC, WAIC=WAIC, L_bar))
   })
 }
+
+
+calc_cpo <- function(posterior = NULL ,data = NULL){
+  chains <- length(posterior$mcmc)
+  store <- dim(posterior$mcmc[[1]])[1]
+  Nobs <- length(data$y)
+  lik <- as.matrix(posterior$mcmc, chains = TRUE)
+  lik <- lik[,grep("lik", colnames(lik))]
+  cpo_vec <- apply(1/lik, 2, sum)
+  cpo_vec <- nrow(lik) / cpo_vec
+  cpo_vec[which(data$has_species == 0)] <- NA
+  cpo <- -sum(log(cpo_vec), na.rm = TRUE)
+  return(cpo)
+}

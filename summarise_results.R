@@ -2,20 +2,161 @@
 
 source("sourcer.R")
 
-model <- "reparam_longrun"
-folder <- paste0("./results/", model,"/")
-my_rds <- list.files(folder, pattern = "ranefshift.RDS", full.names = TRUE)
-#my_rds <- my_rds[-grep("waic", my_rds)]
-my_rds_short <- sapply(strsplit(my_rds, "/"), "[", 4)
-my_rds_short <- sapply(strsplit(my_rds_short, "\\."), "[", 1)
-my_rds_short <- gsub("_ranefshift", "", my_rds_short)
+model_selection <- TRUE
+if(model_selection){
+models <- c('global', 'housing_density', 'habitat', 'null')
+
+# get cpo score for each species
+cpo_ans <- matrix(NA, ncol = 5, nrow = 8)
+colnames(cpo_ans) <- c("species", models)
+for(i in 1:length(models)){
+  my_cpo <- read.csv(paste0("./results/",models[i],"/cpo.csv"))
+  cpo_ans[,1] <- as.character(my_cpo$species)
+  cpo_ans[,i+1] <- my_cpo$cpo
+}
+
+cpo_ans <- data.frame(cpo_ans)
+cpo_ans$best <- apply(cpo_ans[,-1], 1, function(x) which.min(x))
+cpo_ans$best <- models[cpo_ans$best]
+
+write.csv(cpo_ans, "cpo_scores.csv", row.names = FALSE, quote = FALSE)
+
+
+# build up the rds filenames
+folder <- "./results/best/" # paste0("./results/",cpo_ans$best,"/")
+my_rds <- paste0("./results/", cpo_ans$best,"/",cpo_ans$species,".RDS")
+my_rds_short <- as.character(cpo_ans$species)
 
 for(species in 1:length(my_rds)){
   tmp_rds <- readRDS(my_rds[species])
   tmp_mat <- as.matrix(as.mcmc.list(tmp_rds), chains = TRUE)
   # drop the z stuff
   tmp_matz <- tmp_mat[,grep("z", colnames(tmp_mat))]
-  tmp_mat <- tmp_mat[,-c(1,grep("z", colnames(tmp_mat)))]
+  tmp_mat <- tmp_mat[,-c(1,grep("z|lik", colnames(tmp_mat)))]
+  tmp_mat <- as.data.frame(tmp_mat)
+  tmp_matz <- as.data.frame(tmp_matz)
+  # save the file
+  data.table::fwrite(tmp_mat, paste0(folder, my_rds_short[species],
+                                     "_matrix.csv"))
+  data.table::fwrite(tmp_matz, paste0(folder, my_rds_short[species],
+                                      "_zed.csv"))
+  rm(tmp_mat)
+  rm(tmp_matz)
+}
+
+my_res <- list.files(folder , pattern = "_matrix.csv$", full.names = TRUE)
+my_rds_short <- sapply(strsplit(my_res, "/"), "[", 4)
+my_rds_short <- sapply(strsplit(my_rds_short, "\\."), "[", 1)
+my_rds_short <- gsub("(\\1)_matrix", "\\1", my_rds_short)
+
+# bring in the city data
+cdat <- read.csv("data/city_level_data.csv", stringsAsFactors = FALSE)
+cdat <- cdat[order(cdat$city),]
+
+
+
+
+swt <- function(x, cdat){
+  ans <- switch(x,
+                'global' = c("Bmu", 'between_prophab','between_hden',
+                             'within_urb', 'probhab_onurb', 'hden_onurb', 
+                             'average_detection'),
+                'housing_density' = c("Bmu",'between_hden',
+                                      'within_urb', 'hden_onurb', 
+                                      'average_detection'),
+                'habitat' = c("Bmu", 'between_prophab',
+                              'within_urb', 'probhab_onurb',
+                              'average_detection'),
+                'null' =c("Bmu",
+                          'within_urb',
+                          'average_detection')
+  )
+  
+  to_ret <- c(paste0(cdat$city,"-intercept"), 
+              paste0(cdat$city,"-slope"),
+              ans,
+              paste0(cdat$city,"-diff")
+  )
+  return(to_ret)
+  
+}
+
+
+# make a plot for each species
+for(species in 1:length(my_res)){
+  # read in the file
+  my_mcmc <- data.table::fread(my_res[species], data.table = FALSE) %>% 
+    apply(., 2, HDIofMCMC, .95) %>% t(.)
+  # round them 
+  rmcmc <- round(my_mcmc, 2)
+  # paste them together
+  pmcmc <- apply(rmcmc, 1, function(x) {
+    paste0(sprintf("%.2f", x[2])," (", 
+           sprintf("%.2f", x[1]), " - ", 
+           sprintf("%.2f", x[3]), ")")})
+  
+  
+  
+  
+  # standard deviation now
+  
+  sd_res <- matrix(pmcmc[grep("sd", names(pmcmc))], 
+                   ncol = 2, 
+                   nrow = 1)
+  sd_res <- cbind(my_rds_short[species],sd_res)
+  colnames(sd_res) <- c("Species","psi_sd", "rho_sd")
+  
+  # city specific now
+  npar <- length(grep("^B|^b1|^b2|^Dmu", names(pmcmc)))
+  b_res <- matrix(pmcmc[grep("^B|^b1|^b2|^Dmu", names(pmcmc))], ncol = 1, nrow = npar)
+  species_is_there <- as.logical(c(rep(det_events[,my_rds_short[species]], 2), 
+                                   rep(NA, length(b_res) - 20)))
+  
+  
+ 
+  
+  
+  b_res <- cbind(as.character(my_rds_short[species]),
+                 swt(cpo_ans$best[order(cpo_ans$species)][species], cdat),
+                 species_is_there,
+                 b_res
+                 )
+  colnames(b_res) <- c("Species", "parameter",'species_there', "estimate")
+  
+  
+  if(species == 1){
+    write.csv(sd_res, "./results_summary/city_sd_cpo.csv", row.names = FALSE)
+    write.csv(b_res, "./results_summary/within_city_cpo.csv", row.names = FALSE)
+  } else{
+    write.table(sd_res,"./results_summary/city_sd_cpo.csv", row.names = FALSE,
+                append = TRUE, sep = ",", col.names = FALSE)
+    write.table(b_res, "./results_summary/within_city_cpo.csv", row.names = FALSE, 
+                col.names = FALSE,
+                append = TRUE, sep = ",")
+  }
+  
+  
+}
+
+
+
+
+} else{
+
+model <- "global"
+folder <- paste0("./results/", model,"/")
+my_rds <- list.files(folder, pattern = "*.RDS", full.names = TRUE)
+#my_rds <- my_rds[-grep("waic", my_rds)]
+my_rds_short <- sapply(strsplit(my_rds, "/"), "[", 4)
+my_rds_short <- sapply(strsplit(my_rds_short, "\\."), "[", 1)
+#my_rds_short <- gsub("_ranefshift", "", my_rds_short)
+}
+for(species in 1:length(my_rds)){
+  tmp_rds <- readRDS(my_rds[species])
+  tmp_mat <- as.matrix(as.mcmc.list(tmp_rds), chains = TRUE)
+  # drop the z stuff
+  tmp_matz <- tmp_mat[,grep("z", colnames(tmp_mat))]
+  tmp_mat <- tmp_mat[,-c(1,grep("z|lik", colnames(tmp_mat)))]
   tmp_mat <- as.data.frame(tmp_mat)
   tmp_matz <- as.data.frame(tmp_matz)
   # save the file
@@ -59,12 +200,12 @@ for(species in 1:length(my_res)){
   
   # city specific now
   
-  b_res <- matrix(pmcmc[grep("^B|^b1|^b2", names(pmcmc))], ncol = 1, nrow = 36)
+  b_res <- matrix(pmcmc[grep("^B|^b1|^b2|^Dmu", names(pmcmc))], ncol = 1, nrow = 37)
   species_is_there <- as.logical(c(rep(det_events[,my_rds_short[species]], 2), rep(NA, length(b_res) - 20)))
   
   b_res <- cbind(my_rds_short[species], 
                  c(paste0(cdat$city,"-intercept"), paste0(cdat$city,"-slope"), "Bmu", 'between_prophab','between_hden',
-                   'within_urb', 'probhab_onurb', 'hden_onurb', paste0(cdat$city,"-diff")),
+                   'within_urb', 'probhab_onurb', 'hden_onurb', 'average_detection', paste0(cdat$city,"-diff")),
                  species_is_there,
                  b_res)
   colnames(b_res) <- c("Species", "parameter",'species_there', "estimate")
