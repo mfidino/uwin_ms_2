@@ -1,8 +1,12 @@
 source("sourcer.R")
 
 
+cpo <- read.csv("cpo_scores.csv", 
+                stringsAsFactors = FALSE
+                )
+cpo <- cpo[order(cpo$species),]
 
-which_folder <- "reparam_longrun"
+which_folder <- "best"
 
 my_files <- list.files(paste0("./results/", which_folder),
                        pattern = "matrix", 
@@ -47,14 +51,18 @@ for(species in 1:length(sp_name)){
                               hden_btwn = cdat$hden)
   row.names(new_city_data) <- cdat$city
   
+  
   preds <- predict.intercept(mmat = results_matrix,
                        new_data = new_data,
                        city_data = cdat,
                        new_city_data = new_city_data,
-                       species_there = det_events[,sp_name[species]])
+                       species_there = det_events[,sp_name[species]],
+                       model = cpo$best[species])
+  if(cpo$best[species] != 'habitat'){
   makeplot.hdens(preds = preds, species = sp_name[species],x = new_data$hden_btwn,
                    cityx = cdat$hden, species_there = det_events[,sp_name[species]],
                  pp = FALSE)
+  }
   
   # for habitat intercept
   new_data <- data.frame(hden = 0,
@@ -71,11 +79,13 @@ for(species in 1:length(sp_name)){
                                   new_data = new_data,
                                   city_data = cdat,
                                   new_city_data = new_city_data,
-                                  species_there = det_events[,sp_name[species]])
-  
+                                  species_there = det_events[,sp_name[species]],
+                             model = cpo$best[species])
+  if(cpo$best[species] != 'housing_density'){
   makeplot.habitat(preds = preds, species = sp_name[species],x = new_data$prophab_btwn,
                    cityx = cdat$habitat, species_there = det_events[,sp_name[species]],
                    pp = FALSE)
+  }
   
 }
 # plots for slopes
@@ -106,11 +116,13 @@ for(species in 1:length(sp_name)){
                              new_data = new_data,
                              city_data = cdat,
                              new_city_data = new_city_data,
-                             species_there = det_events[,sp_name[species]])
-  
+                             species_there = det_events[,sp_name[species]],
+                         model = cpo$best[species])
+  if(cpo$best[species] != 'habitat'){
   makeplot.hdens(preds = preds, species = sp_name[species],x = new_data$hden_btwn,
                  cityx = cdat$hden, species_there = det_events[,sp_name[species]],
                  intercept = FALSE, window = FALSE, pp = FALSE)
+  }
 }
 
 for(species in 1:length(sp_name)){
@@ -137,12 +149,13 @@ for(species in 1:length(sp_name)){
                              new_data = new_data,
                              city_data = cdat,
                              new_city_data = new_city_data,
-                             species_there = det_events[,sp_name[species]])
-  
+                             species_there = det_events[,sp_name[species]],
+                         model = cpo$best[species])
+  if(cpo$best[species] != 'housing_density'){
   makeplot.habitat(preds = preds, species = sp_name[species],x = new_data$prophab_btwn,
                    cityx = cdat$habitat,
                    intercept = FALSE, window = FALSE, pp = FALSE)
-  
+  }
   
 }
 
@@ -161,49 +174,49 @@ my_medians <- data.frame(city = det_data$city,
                                 nrow = nrow(det_data)))
 colnames(my_medians)[-c(1:2)] <- sp_name
 
-z_matrix <- array(0, dim  =c(500000, 691))
+z_matrix <- array(0, dim  =c(125000, 808))
 
 for(species in 1:length(sp_name)){
   zed <- data.table::fread(my_z_files[species],
-                           data.table = FALSE, nrows = 500000) %>% 
+                           data.table = FALSE, nrows = 125000) %>% 
                              as.matrix(.) %>% 
     sweep(., 2, has_species[,sp_name[species]], "*")
   
   #my_medians[,sp_name[species]] <- apply(zed, 2, median)
-  z_matrix[,,species] <-z_matrix + zed
+  z_matrix <-z_matrix + zed
   rm(zed)
 }
 
-# do it again but paste together each species
-to_skip <- seq(0, 450000, by = 50000)
-to_skip[-1] <- to_skip[-1] + 1
+## do it again but paste together each species
+#to_skip <- seq(0, 450000, by = 50000)
+#to_skip[-1] <- to_skip[-1] + 1
+#
+#
+#
+#for(iter in 2:length(to_skip)){
+#  z_matrix <- array(0, dim  =c(50000, 808,8))
+#for(species in 1:length(sp_name)){
+#  zed <- data.table::fread(my_z_files[species],
+#                           data.table = FALSE, nrows = 50000,
+#                           skip=to_skip[iter]) %>% 
+#    as.matrix(.) %>% 
+#    sweep(., 2, has_species[,sp_name[species]], "*")
+#  
+#  #my_medians[,sp_name[species]] <- apply(zed, 2, median)
+#  z_matrix[,,species] <-zed
+#  rm(zed)
+#}
+#  species_paste <- apply(z_matrix, c(1,2), paste, collapse = '-')
+#  readr::write_csv(data.frame(species_paste, stringsAsFactors = FALSE),
+#                   "tmp_paste.csv", append = TRUE)
+#  rm(species_paste)
+#  rm(z_matrix)
+#  
+#}
 
 
 
-for(iter in 2:length(to_skip)){
-  z_matrix <- array(0, dim  =c(50000, 691,8))
-for(species in 1:length(sp_name)){
-  zed <- data.table::fread(my_z_files[species],
-                           data.table = FALSE, nrows = 50000,
-                           skip=to_skip[iter]) %>% 
-    as.matrix(.) %>% 
-    sweep(., 2, has_species[,sp_name[species]], "*")
-  
-  #my_medians[,sp_name[species]] <- apply(zed, 2, median)
-  z_matrix[,,species] <-zed
-  rm(zed)
-}
-  species_paste <- apply(z_matrix, c(1,2), paste, collapse = '-')
-  readr::write_csv(data.frame(species_paste, stringsAsFactors = FALSE),
-                   "tmp_paste.csv", append = TRUE)
-  rm(species_paste)
-  rm(z_matrix)
-  
-}
-
-
-
-test <- apply(z_matrix, c(1,2), paste, collapse = "-")
+#test <- apply(z_matrix, c(1,2), paste, collapse = "-")
 
 # do average species richness in patch per city
 unq_city <- sort(unique(det_data$city))
@@ -214,6 +227,7 @@ city_low_gradient <- city_high_gradient <- matrix(0, ncol = 6, nrow = 10)
 hd_cwc %>% group_by(city) %>% 
   summarise(min = min(hd_1000),
             max = max(hd_1000))
+
 
 # pretty city names, ordered by average housing density
 
@@ -226,9 +240,9 @@ cplot$pretty <- c("Austin,\nTexas",
                   "Fort Collins,\nColorado",
                   "Iowa City,\nIowa",
                   "Indianapolis,\nIndiana",
-                  "Long Beach,\nCalifornia",
+                  "Orange County,\nCalifornia",
                   "Manhattan,\nKansas",
-                  "Madison,\nWisconson",
+                  "Madison,\nWisconsin",
                   "Wilmington,\nDeleware")
 cplot <- cplot[order(cplot$hden),]
 for(city in 1:ncity){
@@ -247,6 +261,24 @@ for(city in 1:ncity){
                                         probs = c(0.025,0.05,.1,0.9, 0.95, 0.975))
   
 }
+
+# make lists for 95% CI
+low_list <- high_list <-  vector("list", length = ncity)
+
+for(city in 1:ncity){
+  
+  low_list[[city]] <- z_matrix[,which(det_data$city == unq_city[city] &
+                                                     hd_cwc$hd_1000 <= 0)]  
+  high_list[[city]] <- z_matrix[,which(det_data$city == unq_city[city] &
+                                                      hd_cwc$hd_1000 > 0)]
+  
+}
+
+all_lows <- unlist(low_list)
+all_highs <- unlist(high_list)
+quantile(all_lows, probs = c(0.025,0.5,0.975))
+quantile(all_highs, probs = c(0.025,0.5,0.975))
+
 #city_rich_low <- sweep(city_rich_low,1, sp_rich, "/")
 #city_rich_high <- sweep(city_rich_high,1, sp_rich, "/")
 windows(8,5, xpos = 10)
@@ -334,7 +366,7 @@ text(x = 1:10, y = tester, labels = pretty_hd, pos = NULL, cex = 1.2 )
 # step 1. select a city
 my_city <- 'chil'
 city_results <- vector("list", length = ncity)
-n_sims <- 50
+
 max_at_species <- function(x, y){
   x <- sort(x)
   species_per <- strsplit(names(x),"-") %>% sapply(.,function(x) sum(as.numeric(x)))
@@ -347,9 +379,10 @@ filter_rich <- function(x, y){
   return(x[which(species_per == y)])
 }
 
-to_skip <- seq(0, 490000, by = 10000)
-n_sim <- 9999
+to_skip <- seq(0, 115000, by = 10000)
+n_sims <- 9999
 for(iter in 1:length(to_skip)){
+  print(iter)
 for(city in 1:ncity){
   my_city <- tolower(cplot$city[city])
   tmp_city <- array(0, dim = c(n_sims,length(which(det_data$city == my_city)),8))
@@ -389,17 +422,14 @@ for(species in 1:length(sp_name)){
 }
 }
   
-tapply(c(city_results[[city]]$lower, lower_comp), 
-       names(c(city_results[[city]]$lower, lower_comp)), sum)
 
+best_low <- best_high <- rep(NA, ncity)
 
-
-      #max_at_species(lower_comp, lower_rich),
-       #                      upper = max_at_species(upper_comp, upper_rich))
-   
+for(i in 1:ncity){
+best_low[[i]] <- names(city_results[[i]]$lower_comp)[which.max(city_results[[i]]$lower_comp)]
+best_high[[i]] <- names(city_results[[i]]$upper_comp)[which.max(city_results[[i]]$upper_comp)]
+    
 }
-}
-
 
 
 
@@ -534,3 +564,75 @@ for(species in 1:length(sp_name)){
          y = my_res[i,-2])
   }
   
+  
+  #### plotting for supp mater A
+  
+  # 
+  
+  library(vioplot)
+  
+  supp_plot_data <- patch_covs
+  supp_plot_data$hd_1000 <- supp_plot_data$hd_1000 / 1000
+  windows(6,8)
+  tiff("./plots/supp_mater/hdenrange.tiff", height = 6, width = 8,
+       units = "in", res = 600, compression = "lzw")
+  par(mar = c(5,7,0.5,0.5), usr =c(0,10,0,10) )
+  plot(1~1, type ="n", bty = 'l', xlab = "", ylab = "", xaxt = "n",
+       yaxt = "n", ylim = c(0.368,10 * 0.965), xlim = c(0.368,10 * 0.965))
+  par("usr")
+  
+  axis(2, at = seq(0.25, 9.25, 1), labels = F, tck = -0.025)
+  
+  # get names in the correct order
+  
+  mtext(text = cplot$pretty[order(cplot$hden)], 
+        2, 
+        line = 1.25,
+        at = seq(0.25,9.5,1),
+        las = 1,
+        cex = 0.9
+  )
+  axis(1, at = seq(0,10, 1), labels = F, tck = -0.025)
+  axis(1, at = seq(0,10, 1/2), labels = F, tck = -0.025/2)
+  mtext(text = sprintf("%.f",seq(0,10,1)),
+        1,
+        line = 0.75,
+        at = 0:10)
+  
+  mtext(expression("Site-level housing density (1000 houses" * phantom('h') * km^-2 *")"),
+        1,
+        at = mean(0:10),
+        line = 3,
+        cex = 1.5
+        )
+  # plot them my median
+  
+  to_plot <- cdat$city[order(cdat$hden)]
+  u <- par("usr")
+  for(i in 0:10){
+    lines(x= rep(i, 2),
+          y = c(u[1],u[2]),
+          col = scales::alpha("#424342", 0.5))
+  }
+  
+  for(i in 1:10){
+  my_vioplot(
+    supp_plot_data$hd_1000[patch_covs$city== to_plot[i]],
+    at = i-1,
+    side = "right",
+    horizontal = TRUE,
+    add = TRUE,
+    wex = 2,
+    col = "#32DAC3"
+  )
+  }
+  
+ dev.off()
+
+  
+  housing_range <- patch_covs %>% group_by(city) %>% 
+    summarise(mean = mean(hd_1000),
+              min = min(hd_1000),
+              max = max(hd_1000))
+  
+housing_range <- housing_range[order(housing_range$mean),]

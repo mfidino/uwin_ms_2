@@ -1,5 +1,5 @@
 
-svg('./plots/sp_rich_figure.svg', height = 6, width = 9)
+svg('./plots/sp_rich_figure_best.svg', height = 6, width = 9)
 par(mar = c(5,7,0.5,7))
 m <- matrix(c(1,1,2), ncol = 1, nrow = 3)
 layout(m)
@@ -116,8 +116,8 @@ mtext("Most likely wildlife community at median species richness", 1, cex = 1.25
 my_col_low <- cgrad_low(100)[100]
 my_col_high <- cgrad_high(100)[100]
 
-#nlow <- city_rich_low[cplot$ord, 2]
-#nhigh <- city_rich_high[cplot$ord,2]  
+nlow <- city_rich_low[cplot$ord, 2]
+nhigh <- city_rich_high[cplot$ord,2]  
 #best_low <- best_low[cplot$ord]
 #best_high <- best_high[cplot$ord]
 
