@@ -11,7 +11,7 @@ source("sourcer.R")
 # Settings for the jags models
 
 
-my_model <- "./jags_scripts/city_mean_occupancy2.R"
+my_model <- "./jags_scripts/city_mean_occupancy.R"
 nchain <- 5
 nadapt <- 60000
 nburnin <- 60000
