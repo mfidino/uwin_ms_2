@@ -228,7 +228,7 @@ makeplot.hdens <- function(
               ),
       height = 4, 
       width = 4, 
-      res = 300, 
+      res = 600, 
       units = "in",
       compression = 'lzw'
   )
@@ -342,7 +342,7 @@ makeplot.habitat <- function(preds = NULL, species = NULL, x = NULL,
         height = 4,
         width = 4,
         units = "in",
-        res = 300,
+        res = 600,
         compression = 'lzw'
     )
     }

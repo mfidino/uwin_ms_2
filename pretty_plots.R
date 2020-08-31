@@ -228,11 +228,3 @@ barplot(log10(city_sum[,2]), horiz = TRUE, xlim = c(0,4), col = cols,
 mtext(unq_cat, 2, at = c(1:5)-0.5, line = 2, las = 2)
 
 
-for()
-
-tmp <- cities[cities$size ==]
-plot(cities$lat[cities$size == ])
-
-
-plot(cities$lat ~ cities$lng, pch = 19,
-     col = scales::alpha(sapply(cities$size, col_switch), 0.5))

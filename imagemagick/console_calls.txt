@@ -1,10 +1,10 @@
 
 # width we want for an image
-convert fox_squirrel.png -resize 300x fsmall.png
+convert fox_squirrel.png -resize 300x foxsquirrel_image.png
 
 # put image on top of another
 
-convert fox_squirrel_slope.tiff fsmall.png -gravity southeast -geometry +60+240 -composite test.tiff
+convert fox_squirrel_slope.tiff foxsquirrel_image.png -gravity southeast -geometry +60+240 -composite test.tiff
 
 # add text 
 convert rfplotwi.tiff -font arial -pointsize 50 -annotate +269+90  (b) rfplotwi.tiff
@@ -15,7 +15,7 @@ convert rfplotwi.tiff -crop 0x0+0-185 rfplot_crop.tiff
 
 # for southwest
 
-convert raccoon_intercept_popdens.tiff small_raccoon.png -gravity southwest -geometry +270+240 -composite raccoon_with_drawing.tiff
+convert raccoon_intercept_popdens.tiff raccoon_image.png -gravity southwest -geometry +270+240 -composite raccoon_with_drawing.tiff
 
 # resize images to be 750 pixels wide
 
