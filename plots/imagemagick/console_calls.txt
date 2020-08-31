@@ -1,3 +1,9 @@
+### I used imagemagick to string together a number of the figures to 
+### create the final figures (Fig 2, 3, and 4) for this publication. 
+
+### This is just an example of the calls I used to add images and
+### stack sub-figures
+
 
 # width we want for an image
 convert fox_squirrel.png -resize 300x foxsquirrel_image.png
