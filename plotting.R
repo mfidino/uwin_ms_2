@@ -187,37 +187,6 @@ for(species in 1:length(sp_name)){
   rm(zed)
 }
 
-## do it again but paste together each species
-#to_skip <- seq(0, 450000, by = 50000)
-#to_skip[-1] <- to_skip[-1] + 1
-#
-#
-#
-#for(iter in 2:length(to_skip)){
-#  z_matrix <- array(0, dim  =c(50000, 808,8))
-#for(species in 1:length(sp_name)){
-#  zed <- data.table::fread(my_z_files[species],
-#                           data.table = FALSE, nrows = 50000,
-#                           skip=to_skip[iter]) %>% 
-#    as.matrix(.) %>% 
-#    sweep(., 2, has_species[,sp_name[species]], "*")
-#  
-#  #my_medians[,sp_name[species]] <- apply(zed, 2, median)
-#  z_matrix[,,species] <-zed
-#  rm(zed)
-#}
-#  species_paste <- apply(z_matrix, c(1,2), paste, collapse = '-')
-#  readr::write_csv(data.frame(species_paste, stringsAsFactors = FALSE),
-#                   "tmp_paste.csv", append = TRUE)
-#  rm(species_paste)
-#  rm(z_matrix)
-#  
-#}
-
-
-
-#test <- apply(z_matrix, c(1,2), paste, collapse = "-")
-
 # do average species richness in patch per city
 unq_city <- sort(unique(det_data$city))
 city_rich_low <- matrix(0, ncol = 3, nrow = 10)
@@ -629,10 +598,3 @@ for(species in 1:length(sp_name)){
   
  dev.off()
 
-  
-  housing_range <- patch_covs %>% group_by(city) %>% 
-    summarise(mean = mean(hd_1000),
-              min = min(hd_1000),
-              max = max(hd_1000))
-  
-housing_range <- housing_range[order(housing_range$mean),]
