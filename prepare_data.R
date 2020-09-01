@@ -1,5 +1,8 @@
 # Read in the data
-det_data <- read.csv("./data/detection_data.csv", stringsAsFactors = FALSE)
+det_data <- read.csv(
+  "./data/detection_data.csv",
+  stringsAsFactors = FALSE
+)
 det_data <- det_data[order(det_data$city,det_data$year),]
 
 # number of sites

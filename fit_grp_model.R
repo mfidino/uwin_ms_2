@@ -17,6 +17,27 @@ nsample <- 2.5e4
 nthin <- 10
 my_method <- "parallel"
 
+# make results folder
+if(!file.exists("./results")){
+  dir.create("./results")
+  dir.create("./mybutt")
+}
+# and check each respective sub-model
+if(!file.exists("./results/best")){
+  dir.create("./results/best")
+}
+if(!file.exists("./results/global")){
+  dir.create("./results/global")
+}
+if(!file.exists("./results/housing_density")){
+  dir.create("./results/housing_density")
+}
+if(!file.exists("./results/habitat")){
+  dir.create("./results/habitat")
+}
+if(!file.exists("./results/null")){
+  dir.create("./results/null")
+}
 
 # get the names of the species we are fitting
 my_species <- colnames(has_species)

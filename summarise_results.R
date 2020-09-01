@@ -23,7 +23,7 @@ write.csv(cpo_ans, "cpo_scores.csv", row.names = FALSE, quote = FALSE)
 
 
 # build up the rds filenames
-folder <- "./results/best/" # paste0("./results/",cpo_ans$best,"/")
+folder <- "./results/best/" 
 my_rds <- paste0("./results/", cpo_ans$best,"/",cpo_ans$species,".RDS")
 my_rds_short <- as.character(cpo_ans$species)
 
@@ -273,17 +273,3 @@ points(median(to_plot) ~ i, pch = "-", cex = 3)
 }
 dev.off()
 
-image <- image_read("./plots/avg_occupancy.tiff")
-
-text(x = seq(1,7)-0.48, par("usr")[3] - 0.07, 
-     labels = fancy_names, srt = 35, pos = 1, xpd = TRUE)
-  text = sp_name_or, 1, at = seq(1,7))
-
-pinch <- function(wid = NULL, dpi = NULL){
-  return( wid * dpi)
-  
-}
-
-image <- image_scale(image, "1600")
-
-image_write(image, "./plots/avg_occupancy.tiff")
