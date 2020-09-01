@@ -7,11 +7,7 @@ Applications.
 
 -----
 
-<div data-align="center">
-
-<img width="150" height="auto" src="./images/opossum.JPG" alt="A silhouette of an opossum." />
-
-</div>
+<div data-align="center"><img width="150" height="auto" src="./images/opossum.JPG" alt="A silhouette of an opossum." /></div>
 
 <div data-align="center">
 
