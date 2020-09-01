@@ -71,14 +71,23 @@ Yang, J. L., Jin, S., Danielson, P., Homer, C., Gass, L., Bender, S.M., Case, A.
 <br>
 <br>
 
-**precip.csv:** This csv has 4 columns and 40 rows (excluding the header) and contains information on the number of inches of rain that occured over a given week of sampling. This csv is ordered identically to `lure_position.csv`
+**detection_data.csv:** This csv has 13 columns and 808 rows (excluding the header) and contains information on the number of days each species was detected at a site.
 
 | Column header | Data type | Description |
 |---|---|---|
-| `week_1` | Numeric | Inches of rain on week 1 |
-| `week_2` | Numeric | Inches of rain on week 2 |
-| `week_3` | Numeric | Inches of rain on week 3 |
-| `week_4` | Numeric | Inches of rain on week 4 |
+| `city` | Character | The city abbreviation. |
+| `site` | Character | The name code for each site. |
+| `raccoon` | Numeric | The number of days raccoon were detected at a site. |
+| `coyote` | Numeric | The number of days coyote were detected at a site. |
+| `rabbit` | Numeric | The number of days cottontail rabbits were detected at a site. |
+| `opossum` | Numeric | The number of days Virginia opossum were detected at a site. |
+| `skunk` | Numeric | The number of days striped skunk were detected at a site. |
+| `redfox` | Numeric | The number of days red fox were detected at a site. |
+| `graysquirrel` | Numeric | The number of days eastern gray squirrel were detected at a site. |
+| `foxsquirrel` | Numeric | The number of days fox squirrel were detected at a site. |
+| `J` | Integer | The number of days the site was sampled. |
+| `site_code` | Character | The unique (by city and location) code. |
+| `year` | Integer | The year the site was sampled. |
 
 Rain data were collected from the O'Hare international airport at [https://www.ncdc.noaa.gov/cdo-web/search](https://www.ncdc.noaa.gov/cdo-web/search) 
 
