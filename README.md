@@ -49,23 +49,24 @@ Applications.
 
 ---
 
-<div align="center"><img width="150" height="auto" src="./images/coyote.png" alt="A silhouette of a coyote." /></div>
+<div align="center"><img width="150" height="auto" src="./images/coyote.JPG" alt="A silhouette of a coyote." /></div>
 
 <div align="center"> <h3>Data</h3> </div>
 
 ---
 
-**There are 2 data files within the `data` sub-folder which are used in this analysis. They include:**
+**There are 13 data files within the `data` sub-folder which are used in this analysis. They include:**
 
-**lure_position.csv:** This csv has 5 columns and 40 rows (excluding the header) and contains information on whether a lure was placed in view of a given camera.
+**city_level_data.csv:** This csv has 2 columns and 10 rows (excluding the header) and contains information on the proportion of greenspace in a city.
 
 | Column header | Data type | Description |
 |---|---|---|
-| `site`| Character | The site abbreviation. Sampling units are split apart by cameras A and B. |
-| `week_1` | Numeric | Whether lure was present or not during the first week. 1 = lure, 0 = no lure control. |
-| `week_2` | Numeric | Whether lure was present or not during the second week. 1 = lure, 0 = no lure control. |
-| `week_3` | Numeric | Whether lure was present or not during the third week. 1 = lure, 0 = no lure control. |
-| `week_4` | Numeric | Whether lure was present or not during the fourth week. 1 = lure, 0 = no lure control. |
+| `City`| Character | The city abbreviation. |
+| `habitat` | Numeric | The proportion of greenspace in a city's study area. To calculate the proportion of available greenspace in a city’s study area, we followed the U.S. EPA’s EnviroAtlas definition (Pickard et al. 2015), by combining the forest, herbaceous, shrub & grass, and developed open space (e.g., golf courses, cemeteries, parks, etc.) land cover classes from the National Land Cover Database (Yang et al. 2016) and divided the summed area of those classes by the total sampled area for each city. See manuscript for additional details. |
+
+Pickard, B. R., Daniel, J., Mehaffey, M., Jackson, L. E., and A. Neale. 2015. EnviroAtlas: a new geospatial tool to foster ecosystem services science and resource management. Ecosystem Services 14:44-55.
+
+Yang, J. L., Jin, S., Danielson, P., Homer, C., Gass, L., Bender, S.M., Case, A., Costello, C., Dewitz, J., Fry, J. and M. Funk. 2018. A new generation of the United States National Landcover Database: requirements, research priorities, design, and implementation strategies. ISPRS Journal of Photogrammetry and Remote Sensing 146:108-123.
 
 <br>
 <br>
