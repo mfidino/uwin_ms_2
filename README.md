@@ -9,6 +9,6 @@ Applications.
 
 <div align="center"><img width="150" height="auto" align="center" src="./images/opossum.JPG" alt="A silhouette of an opossum." /></div>
 
-<div align="center"> <h3>Scripts</h3> </div>
+<p align="center"> <h3>Scripts</h3> </p>
 
 ---
