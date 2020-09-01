@@ -1,0 +1,22 @@
+---
+title: "A repository for:"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Fidino et al. (*in press*). Landscape-scale differences among cities alter common
+species' responses to urbanization. Ecological Applications.
+
+
+---
+
+<div align="center"><img width="150" height="auto" src="./images/opossum.JPG" alt="A silhouette of an opossum." /></div>
+
+<div align="center"> <h3>Scripts</h3> </div>
+
+---
+
+

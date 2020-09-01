@@ -226,8 +226,6 @@ for(species in 1:length(my_res)){
 }
 
 
-
-
 # get_mu
 my_mu <- matrix(0, ncol = 8, nrow = nrow(g_res[[1]]))
 
@@ -248,7 +246,9 @@ sp_name_or
 fancy_names <- c("Raccoon\n", "Fox\nsquirrel", "Virginia\nopossum" , "Eastern\ncottontail",
                  "Coyote\n", "Gray\nsquirrel", "Striped\nskunk","Red fox\n" )
 
-windows(6,6)
+# This is the average occupancy across the cities that have a given 
+#  species.
+
 tiff("./plots/avg_occupancy.tiff", height = 6, width = 6, units = "in",
      res = 400, compression = "lzw")
 par(mar = c(3,4,0.5,0.5))
