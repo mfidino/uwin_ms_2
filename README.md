@@ -89,6 +89,8 @@ Yang, J. L., Jin, S., Danielson, P., Homer, C., Gass, L., Bender, S.M., Case, A.
 | `site_code` | Character | The unique (by city and location) code. |
 | `year` | Integer | The year the site was sampled. |
 
+**uwin_all_sites.csv:**
+
 
 
 ---
