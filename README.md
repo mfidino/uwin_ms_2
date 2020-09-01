@@ -71,7 +71,7 @@ Yang, J. L., Jin, S., Danielson, P., Homer, C., Gass, L., Bender, S.M., Case, A.
 <br>
 <br>
 
-**detection_data.csv:** This csv has 13 columns and 808 rows (excluding the header) and contains information on the number of days each species was detected at a site.
+**detection_data.csv:** This csv has 13 columns and 808 rows (excluding the header) and contains information on the number of days each species was detected at a site. Eight species were were analyzed in this model and includes the raccoon (*Procyon lotor*, labeled `raccoon` in data), coyote (*Canis latrans*, labeled `coyote` in the data), cottontail rabbit (*Sylvilagus floridanus* or *Sylvilagus audubonii*, labeled `rabbit` in the data), Virginia opossum (*Didelphis virginiana*, labeled `opossum` in the data), striped skunk (*Mephitis mephitis*, labeled `skunk` in the data), red fox (*Vulpes vulpes*, labeled `redfox` in the data), eastern gray squirrel (*Sciurus carolinensis*, labeled `graysquirrel` in the data), and fox squirrel (*Sciurus niger*, labeled `foxsquirrel` in the data). 
 
 | Column header | Data type | Description |
 |---|---|---|
@@ -89,7 +89,7 @@ Yang, J. L., Jin, S., Danielson, P., Homer, C., Gass, L., Bender, S.M., Case, A.
 | `site_code` | Character | The unique (by city and location) code. |
 | `year` | Integer | The year the site was sampled. |
 
-Rain data were collected from the O'Hare international airport at [https://www.ncdc.noaa.gov/cdo-web/search](https://www.ncdc.noaa.gov/cdo-web/search) 
+
 
 ---
  <div align="center"><img width="150" height="auto" src="./images/squirrel.JPG" alt="A silhouette of a squirrel." /></div>
