@@ -135,3 +135,5 @@ The remaining csv files are site-specific covariates for each city. They all fol
 
 There are a few other files kicking around this repo. They are either for a bit of flavor (e.g., silhouettes of animals in the `./images` sub-folder, or my line drawings in species specific folders nested in `./plots`). Some of the other stuff is created by running fitting the model (e.g., `cpo_scores.csv`). 
 
+
+
