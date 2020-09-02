@@ -125,3 +125,13 @@ The remaining csv files are site-specific covariates for each city. They all fol
 | `hd_1000` | Numeric | Housing density within a 1000m circular buffer around each site. Number of units per square kilometer. Calculated from Silvis lab. http://silvis.forest.wisc.edu/data/housing-block-change/|
 
 
+---
+
+<div align="center"><img width="150" height="auto" align="center" src="./images/skunk.JPG" alt="A silhouette of a skunk." /></div>
+
+<div align="center"> <h3>Miscellaneous</h3> </div>
+
+---
+
+There are a few other files kicking around this repo. They are either for a bit of flavor (e.g., silhouettes of animals in the `./images` sub-folder, or my line drawings in species specific folders nested in `./plots`). Some of the other stuff is created by running fitting the model (e.g., `cpo_scores.csv`). 
+
