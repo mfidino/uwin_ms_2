@@ -2,6 +2,11 @@
 
 source("sourcer.R")
 
+
+if(!file.exists("./results_summary")){
+  dir.create("./results_summary")
+}
+
 model_selection <- TRUE
 if(model_selection){
 models <- c('global', 'housing_density', 'habitat', 'null')

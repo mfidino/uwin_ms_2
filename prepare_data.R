@@ -37,10 +37,10 @@ patch_covs <- lapply(patch_cov_path, read.csv, header= TRUE, stringsAsFactors = 
 patch_covs <- bind_rows(patch_covs)
 
 # read in all the sites as we need the locationID
-all_sites <- read.csv("./data/uwin_all_sites.csv", stringsAsFactors = FALSE)[,-2]
+all_sites <- read.csv("./data/uwin_all_sites.csv", stringsAsFactors = FALSE)
 
 
-patch_covs <- left_join(patch_covs, all_sites[,c(1,2)], by = c("site" = "LocationName" ))
+patch_covs <- left_join(patch_covs, all_sites[,c("LocationID", "LocationName")], by = c("site" = "LocationName" ))
 
 # to join these we grab the unique name of the city and then the site code info.
 sc_temp <- paste(tolower(patch_covs$city), patch_covs$LocationID, 2, sep="-")
