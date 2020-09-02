@@ -1,6 +1,6 @@
 [![DOI](https://zenodo.org/badge/159403874.svg)](https://zenodo.org/badge/latestdoi/159403874)
 
-A repository for:
+A repository for: 
 ================
 
 Fidino et al. (*in press*). Landscape-scale differences among cities
