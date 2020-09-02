@@ -71,25 +71,34 @@ Yang, J. L., Jin, S., Danielson, P., Homer, C., Gass, L., Bender, S.M., Case, A.
 <br>
 <br>
 
-**detection_data.csv:** This csv has 13 columns and 808 rows (excluding the header) and contains information on the number of days each species was detected at a site. Eight species were were analyzed in this model and includes the raccoon (*Procyon lotor*, labeled `raccoon` in data), coyote (*Canis latrans*, labeled `coyote` in the data), cottontail rabbit (*Sylvilagus floridanus* or *Sylvilagus audubonii*, labeled `rabbit` in the data), Virginia opossum (*Didelphis virginiana*, labeled `opossum` in the data), striped skunk (*Mephitis mephitis*, labeled `skunk` in the data), red fox (*Vulpes vulpes*, labeled `redfox` in the data), eastern gray squirrel (*Sciurus carolinensis*, labeled `graysquirrel` in the data), and fox squirrel (*Sciurus niger*, labeled `foxsquirrel` in the data). 
+**detection_data.csv:** This csv has 13 columns and 808 rows (excluding the header) and contains information on the number of days each species was detected at a site. 
 
 | Column header | Data type | Description |
 |---|---|---|
 | `city` | Character | The city abbreviation. |
 | `site` | Character | The name code for each site. |
-| `raccoon` | Numeric | The number of days raccoon were detected at a site. |
-| `coyote` | Numeric | The number of days coyote were detected at a site. |
-| `rabbit` | Numeric | The number of days cottontail rabbits were detected at a site. |
-| `opossum` | Numeric | The number of days Virginia opossum were detected at a site. |
-| `skunk` | Numeric | The number of days striped skunk were detected at a site. |
-| `redfox` | Numeric | The number of days red fox were detected at a site. |
-| `graysquirrel` | Numeric | The number of days eastern gray squirrel were detected at a site. |
-| `foxsquirrel` | Numeric | The number of days fox squirrel were detected at a site. |
+| `raccoon` | Numeric | The number of days raccoon (*Procyon lotor*) were detected at a site. |
+| `coyote` | Numeric | The number of days coyote (*Canis latrans*) were detected at a site. |
+| `rabbit` | Numeric | The number of days cottontail rabbits (*Sylvilagus floridanus* or *Sylvilagus audubonii*) were detected at a site. |
+| `opossum` | Numeric | The number of days Virginia opossum (*Didelphis virginiana*) were detected at a site. |
+| `skunk` | Numeric | The number of days striped skunk (*Mephitis mephitis*) were detected at a site. |
+| `redfox` | Numeric | The number of days red fox (*Vulpes vulpes*) were detected at a site. |
+| `graysquirrel` | Numeric | The number of days eastern gray squirrel (*Sciurus carolinensis*) were detected at a site. |
+| `foxsquirrel` | Numeric | The number of days fox squirrel (*Sciurus niger*) were detected at a site. |
 | `J` | Integer | The number of days the site was sampled. |
 | `site_code` | Character | The unique (by city and location) code. |
 | `year` | Integer | The year the site was sampled. |
 
-**uwin_all_sites.csv:**
+**uwin_all_sites.csv:** This csv has 6 columns and 512 rows (excluding the header) and contains information to merge the site covariates that are in seperate city-specific files to one `data.frame` in `R`. 
+
+ Column header | Data type | Description |
+|---|---|---|
+| `LocationID` | Numeric | A city-specific integer that is unique to each site within a city. Combined with the city abbreviation to make a unique site across cities. |
+| `LocationName` | Character | The name code for each site. Is represented as `site` in **detection_data.csv** |
+| `coords_x` | Numeric | x coordinates for a site. |
+| `coords_y` | Numeric | y coordinates for a site. |
+| `crs` | integer | epsg code for the coordinates. Some cities provided coordinates in WGS84 while others supplied site coordinates in UTM. |
+| `City` | Character | The city abbreviation. |
 
 
 
