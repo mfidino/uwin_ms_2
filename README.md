@@ -58,6 +58,7 @@ Applications.
 **There are 13 data files within the `data` sub-folder which are used in this analysis. Many of them have city codes, which are shorthand for a specific city. These city codes are:
 
 |city code| city name|
+|---|---|
 |`AUTX`|Austin, Texas|
 |`CHIL`|Chicago, Illinois|
 |`DECO`|Denver, Colorado|
