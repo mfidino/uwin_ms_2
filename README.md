@@ -55,13 +55,27 @@ Applications.
 
 ---
 
-**There are 13 data files within the `data` sub-folder which are used in this analysis. They include:**
+**There are 13 data files within the `data` sub-folder which are used in this analysis. Many of them have city codes, which are shorthand for a specific city. These city codes are:
+
+|city code| city name|
+|`AUTX`|Austin, Texas|
+|`CHIL`|Chicago, Illinois|
+|`DECO`|Denver, Colorado|
+|`FOCO`|Fort Collins, Colorado|
+|`ICIA`|Iowa City, Iowa|
+|`ININ`|Indianapolis, Indiana|
+|`OCCA`|Orange County, California|
+|`MAKS`|Manhattan, Kansas|
+|`MAWI`|Madison, Wisconsin|
+|`WIDE`|Wilmington, Delaware|
+
+**The 13 data files are:**
 
 **city_level_data.csv:** This csv has 2 columns and 10 rows (excluding the header) and contains information on the proportion of greenspace in a city.
 
 | Column header | Data type | Description |
 |---|---|---|
-| `City`| Character | The city abbreviation. |
+| `City`| Character | The city abbreviation.|
 | `habitat` | Numeric | The proportion of greenspace in a city's study area. To calculate the proportion of available greenspace in a city’s study area, we followed the U.S. EPA’s EnviroAtlas definition (Pickard et al. 2015), by combining the forest, herbaceous, shrub & grass, and developed open space (e.g., golf courses, cemeteries, parks, etc.) land cover classes from the National Land Cover Database (Yang et al. 2016) and divided the summed area of those classes by the total sampled area for each city. See manuscript for additional details. |
 
 Pickard, B. R., Daniel, J., Mehaffey, M., Jackson, L. E., and A. Neale. 2015. EnviroAtlas: a new geospatial tool to foster ecosystem services science and resource management. Ecosystem Services 14:44-55.
@@ -91,7 +105,7 @@ Yang, J. L., Jin, S., Danielson, P., Homer, C., Gass, L., Bender, S.M., Case, A.
 
 **uwin_all_sites.csv:** This csv has 6 columns and 512 rows (excluding the header) and contains information to merge the site covariates that are in seperate city-specific files to one `data.frame` in `R`. 
 
- Column header | Data type | Description |
+|Column header | Data type | Description |
 |---|---|---|
 | `LocationID` | Numeric | A city-specific integer that is unique to each site within a city. Combined with the city abbreviation to make a unique site across cities. |
 | `LocationName` | Character | The name code for each site. Is represented as `site` in **detection_data.csv** |
@@ -101,50 +115,12 @@ Yang, J. L., Jin, S., Danielson, P., Homer, C., Gass, L., Bender, S.M., Case, A.
 | `City` | Character | The city abbreviation. |
 
 
+The remaining csv files are site-specific covariates for each city. They all follow the same format and have 3 columns, though the number of rows is equivalent to the number of sites for each city. The file names is `{CITYCODE}covs.csv` where `{CITYCODE}` is one of the city-specific abbreviations (e.g., `AUTXcovs.csv` is the covariates for Austin, Texas). 
 
----
- <div align="center"><img width="150" height="auto" src="./images/squirrel.JPG" alt="A silhouette of a squirrel." /></div>
- 
- <div align="center"> <h3>Detection data</h3> </div>
- 
---- 
-**There are 3 folders within the `data` sub-folder that contain they species detection data for each analysis. They include:**
-
-**/data/detection_history:** This contains 8 csv files, all of which are formatted identically. They are titled after each of the 8 species analyzed in the binomial model. The format of these files are
-
-| Column header | Data type | Description |
+|Column header | Data type | Description |
 |---|---|---|
-| `site`| Character | The site abbreviation. Sampling units are split apart by cameras A and B.` |
-| `day_1` | Numeric | Whether a the species in the csv was detected on this day. Detection = 1, non-detection = 0, sampling did not occur = NA|
-| ... | ... |Additional columns of detection data |
-| `day_28` | Numeric | Whether a the species in the csv was detected on this day. Detection = 1, non-detection = 0, sampling did not occur = NA |
-
-<br>
-<br>
-
-**/data/time_to_detection:** This contains 8 csv files, all of which are formatted identically. They are titled after each of the 8 species analyzed in the exponential model. These files do not contain site information but are ordered identically to `lure_position.csv`. The format of these files are
-
-| Column header | Data type | Description |
-|---|---|---|
-| `week_1` | Numeric | The number of continous days to first detection at a site on week 1. Non-detection = `NA`|
-| `week_2` | Numeric | The number of continous days to first detection at a site on week 2. Non-detection = `NA` |
-| `week_3` | Numeric | The number of continous days to first detection at a site on week 3. Non-detection = `NA` |
-| `week_4` | Numeric | The number of continous days to first detection at a site on week 4. Non-detection = `NA` |
-
-<br>
-<br>
-
-**/data/number_of_photos:** This contains 8 csv files, all of which are formatted identically. They are titled after each of the 8 species analyzed in the Poisson model. These files do not contain site information but are ordered identically to `lure_position.csv`. The format of these files are
-
-| Column header | Data type | Description |
-|---|---|---|
-| `week_1` | Numeric | The number of photos collected of a species at a site on week 1 |
-| `week_2` | Numeric | The number of photos collected of a species at a site on week 2 |
-| `week_3` | Numeric | The number of photos collected of a species at a site on week 3 |
-| `week_4` | Numeric | The number of photos collected of a species at a site on week 4 |
+| `site` | Character | The name code for each site. |
+| `city` | Character | The city abbreviation. |
+| `hd_1000` | Numeric | Housing density within a 1000m circular buffer around each site. Number of units per square kilometer. Calculated from Silvis lab. http://silvis.forest.wisc.edu/data/housing-block-change/|
 
 
-<br>
-<br>
-
- <div align="center"><img width="150" height="auto" src="./images/deer.JPG" alt="A silhouette of a deer." /></div>
