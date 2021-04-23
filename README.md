@@ -3,7 +3,7 @@
 A repository for: 
 ================
 
-Fidino et al. (*in press*). Landscape-scale differences among cities
+Fidino et al. (2020). Landscape-scale differences among cities
 alter common species’ responses to urbanization. Ecological
 Applications.
 
